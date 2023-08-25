@@ -47,7 +47,7 @@ const CharCounter = () => {
 
   return (
     <div className=" flex-col ">
-      <h1 className="text-2xl text-center">Laura&apos;s Character Counter</h1>
+      <h1 className="text-2xl text-center">Character Counter</h1>
       <div className="flex gap-6 mt-8">
         <Card
           className={cn(
