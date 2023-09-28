@@ -46,9 +46,8 @@ const CharCounter = () => {
   };
 
   return (
-    <div className=" flex-col ">
-      <h1 className="text-2xl text-center">Character Counter</h1>
-      <div className="flex gap-6 mt-8">
+    <div className="flex-col">
+      <div className="flex gap-6">
         <Card
           className={cn(
             "flex-auto",
@@ -56,7 +55,7 @@ const CharCounter = () => {
           )}
         >
           <CardHeader className="text-center">
-            <CardTitle>Free Twitter</CardTitle>
+            <CardTitle>𝕏</CardTitle>
             {/* <CardDescription>No money to Elon</CardDescription> */}
           </CardHeader>
           <CardContent>
@@ -73,7 +72,7 @@ const CharCounter = () => {
           )}
         >
           <CardHeader className="text-center">
-            <CardTitle>Twitter Blue</CardTitle>
+            <CardTitle>𝕏 Premium</CardTitle>
             {/* <CardDescription>Actively fueling Elon</CardDescription> */}
           </CardHeader>
           <CardContent>
@@ -85,12 +84,12 @@ const CharCounter = () => {
         </Card>
       </div>
       <Textarea
-        className="w-[60ch] mt-5 min-h-[200px] text-lg"
+        className="md:w-[60ch] mt-5 min-h-[200px] text-lg"
         onChange={handleContentChange}
-        placeholder="Type here..."
+        placeholder="Start typing!"
         value={content}
       />
-      <div className="flex mt-5 gap-5">
+      <div className="flex flex-col md:flex-row mt-5 gap-5">
         <Button
           className="flex-auto"
           variant="destructive"
