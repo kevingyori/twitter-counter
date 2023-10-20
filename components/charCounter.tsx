@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ClipboardCopy, Eraser } from "lucide-react";
+import { getCharCount } from "@/lib/getCharCount";
 
 const CharCounter = () => {
   const [charCount, setCharCount] = useState(0);
@@ -19,12 +20,9 @@ const CharCounter = () => {
   const ref = useRef<HTMLTextAreaElement>(null);
   const [selection, setSelection] = useState("");
 
-  useEffect(() => {
-    console.log(window?.getSelection()?.toString());
-  });
-
-
-
+  // useEffect(() => {
+  //   console.log(window?.getSelection()?.toString());
+  // });
 
   useEffect(() => {
     if (charCount > 280) {
@@ -50,7 +48,7 @@ const CharCounter = () => {
 
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setContent(e.target.value);
-    setCharCount(e.target.value.length);
+    setCharCount(getCharCount(e.target.value));
   };
 
   return (
@@ -113,7 +111,7 @@ const CharCounter = () => {
             setSelection(window?.getSelection()?.toString() ?? "");
           }}
         />
-        <span className="text-gray-500" > {selection.length} characters selected </span >
+        <span className="text-gray-500" > {getCharCount(selection)} characters selected </span >
       </div>
       <div className="flex flex-col md:flex-row mt-5 gap-5">
         <Button
