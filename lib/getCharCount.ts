@@ -1,4 +1,5 @@
 import emojiRegex from "emoji-regex";
+import urlRegex from "url-regex";
 
 const regex = emojiRegex()
 
@@ -10,12 +11,25 @@ const countEmojis = (str: string) => {
   return (str.match(regex) ?? []).length;
 };
 
+const removeUrls = (str: string) => {
+  return str.replace(urlRegex({ strict: false }), "");
+};
+
+const countUrls = (str: string) => {
+  return (str.match(urlRegex({ strict: false })) ?? []).length;
+};
+
+
 export const getCharCount = (str: string) => {
-  // count emojis
+
+  // count emojis and urls
   const emojiCount = countEmojis(str);
-  // remove emojis
+  const urlCount = countUrls(str);
+
+  // remove emojis and urls
   str = removeEmojis(str);
-  // add 2 chars for each emoji to character count
-  // setCharCount(str.length + (emojiCount * 2));
-  return str.length + (emojiCount * 2);
+  str = removeUrls(str);
+
+  // add 2 chars for each emoji and 23 chars for each url to the length
+  return str.length + (emojiCount * 2) + (urlCount * 23);
 };

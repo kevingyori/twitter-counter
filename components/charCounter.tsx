@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ClipboardCopy, Eraser } from "lucide-react";
 import { getCharCount } from "@/lib/getCharCount";
+// import urlRegex from "url-regex";
 
 const CharCounter = () => {
   const [charCount, setCharCount] = useState(0);
@@ -21,8 +22,11 @@ const CharCounter = () => {
   const [selection, setSelection] = useState("");
 
   // useEffect(() => {
-  //   console.log(window?.getSelection()?.toString());
-  // });
+  // console.log(window?.getSelection()?.toString());
+  // console.log('urltest', urlRegex({ strict: false }).test(selection))
+  // const wow = selection.replace(urlRegex(), "");
+  // console.log('wow', wow)
+  // }, [selection]);
 
   useEffect(() => {
     if (charCount > 280) {
