@@ -1,6 +1,10 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.highlight {
+  @apply text-[#1d9bf0];
+}
  
 @layer base {
   :root {

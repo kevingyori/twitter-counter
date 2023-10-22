@@ -1,22 +1,22 @@
 import emojiRegex from "emoji-regex";
-import urlRegex from "url-regex";
+import { URL_REGEX } from "./constants";
 
-const regex = emojiRegex()
+const EMOJI_REGEX = emojiRegex()
 
 const removeEmojis = (str: string) => {
-  return str.replace(regex, "");
+  return str.replace(EMOJI_REGEX, "");
 };
 
 const countEmojis = (str: string) => {
-  return (str.match(regex) ?? []).length;
+  return (str.match(EMOJI_REGEX) ?? []).length;
 };
 
 const removeUrls = (str: string) => {
-  return str.replace(urlRegex({ strict: false }), "");
+  return str.replace(URL_REGEX, "");
 };
 
 const countUrls = (str: string) => {
-  return (str.match(urlRegex({ strict: false })) ?? []).length;
+  return (str.match(URL_REGEX) ?? []).length;
 };
 
 
