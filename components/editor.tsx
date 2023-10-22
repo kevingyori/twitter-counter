@@ -1,5 +1,5 @@
-import { $getRoot, $getSelection, $isRangeSelection } from 'lexical';
-import { useEffect } from 'react';
+import { $getRoot, $getSelection, $isRangeSelection, CLEAR_EDITOR_COMMAND } from 'lexical';
+import { useEffect, useState } from 'react';
 
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { PlainTextPlugin } from '@lexical/react/LexicalPlainTextPlugin';
@@ -7,11 +7,14 @@ import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
 import { AutoLinkPlugin } from '@lexical/react/LexicalAutoLinkPlugin';
 import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
+import { ClearEditorPlugin } from '@lexical/react/LexicalClearEditorPlugin';
 import { AutoLinkNode } from '@lexical/link';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import LexicalErrorBoundary from '@lexical/react/LexicalErrorBoundary';
 import { PLACEHOLDER, URL_REGEX } from '@/lib/constants';
 import { getCharCount } from '@/lib/getCharCount';
+import { Button } from './ui/button';
+import { ClipboardCopy, Eraser } from 'lucide-react';
 
 const theme = {
   link: "highlight"
@@ -36,8 +39,6 @@ const MATCHERS = [
   },
 ];
 
-
-
 // Lexical React plugins are React components, which makes them
 // highly composable. Furthermore, you can lazy load plugins if
 // desired, so you don't pay the cost for plugins until you
@@ -53,6 +54,45 @@ function MyCustomAutoFocusPlugin() {
   return null;
 }
 
+
+function Toolbar({ selection }: { selection: string }) {
+  const [editor] = useLexicalComposerContext();
+
+  const handleClear = () => {
+    editor.update(() => {
+      $getRoot().clear();
+    })
+  };
+
+  const handleCopy = () => {
+    editor.update(() => {
+      const root = $getRoot();
+      const text = root.__cachedText ?? '';
+      navigator.clipboard.writeText(text);
+    })
+  };
+
+  return (
+    <div className='pt-2'>
+      <span className="text-gray-500" > {getCharCount(selection)} characters selected </span >
+      <div className="flex flex-col md:flex-row mt-5 gap-5">
+        <Button
+          className="flex-auto"
+          variant="destructive"
+          onClick={handleClear}
+        >
+          <Eraser className="mr-2 h-4 w-4" />
+          Clear
+        </Button>
+        <Button className="flex-auto" variant="default" onClick={handleCopy}>
+          <ClipboardCopy className="mr-2 h-4 w-4" />
+          Copy
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 // Catch any errors that occur during Lexical updates and log them
 // or throw them as needed. If you don't throw them, Lexical will
 // try to recover gracefully without losing user data.
@@ -64,10 +104,10 @@ function onError(error: Error) {
 type EditorProps = {
   setContent: React.Dispatch<React.SetStateAction<string>>,
   setCharCount: React.Dispatch<React.SetStateAction<number>>,
-  setSelection: React.Dispatch<React.SetStateAction<string>>,
 };
 
-function Editor({ setContent, setCharCount, setSelection }: EditorProps) {
+function Editor({ setContent, setCharCount }: EditorProps) {
+  const [selection, setSelection] = useState('');
   const initialConfig = {
     namespace: 'MyEditor',
     theme,
@@ -182,6 +222,8 @@ function Editor({ setContent, setCharCount, setSelection }: EditorProps) {
         <HistoryPlugin />
         <MyCustomAutoFocusPlugin />
         <AutoLinkPlugin matchers={MATCHERS} />
+        <ClearEditorPlugin />
+        <Toolbar selection={selection} />
       </div>
     </LexicalComposer>
   );

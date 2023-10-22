@@ -12,6 +12,8 @@ import { ClipboardCopy, Eraser } from "lucide-react";
 import { getCharCount } from "@/lib/getCharCount";
 import { PLACEHOLDER } from "@/lib/constants";
 import Editor from "./editor";
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { CLEAR_EDITOR_COMMAND } from "lexical";
 
 const CharCounter = () => {
   const [charCount, setCharCount] = useState(0);
@@ -86,22 +88,7 @@ const CharCounter = () => {
       </div>
       <div className="flex flex-col gap-2">
         {/* <InputField inputRef={ref} content={content} setContent={setContent} setCharCount={setCharCount} setSelection={setSelection} /> */}
-        <Editor setContent={setContent} setCharCount={setCharCount} setSelection={setSelection} />
-        <span className="text-gray-500" > {getCharCount(selection)} characters selected </span >
-      </div>
-      <div className="flex flex-col md:flex-row mt-5 gap-5">
-        <Button
-          className="flex-auto"
-          variant="destructive"
-          onClick={handleClear}
-        >
-          <Eraser className="mr-2 h-4 w-4" />
-          Clear
-        </Button>
-        <Button className="flex-auto" variant="default" onClick={handleCopy}>
-          <ClipboardCopy className="mr-2 h-4 w-4" />
-          Copy
-        </Button>
+        <Editor setContent={setContent} setCharCount={setCharCount} />
       </div>
     </div >
   );
