@@ -1,3 +1,4 @@
+"use client";
 import {
   $getRoot,
   $getSelection,
@@ -22,6 +23,7 @@ import { Button } from "./ui/button";
 import { ClipboardCopy, Eraser } from "lucide-react";
 import { loadLocalContent } from "@/lib/loadLocalState";
 import { usePathname } from "next/navigation";
+import { useLocalStorage } from "@uidotdev/usehooks";
 
 const theme = {
   link: "highlight",
@@ -50,7 +52,7 @@ const MATCHERS = [
 // highly composable. Furthermore, you can lazy load plugins if
 // desired, so you don't pay the cost for plugins until you
 // actually use them.
-function MyCustomAutoFocusPlugin() {
+function AutoFocusPlugin() {
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {
@@ -116,45 +118,32 @@ type EditorProps = {
 };
 
 function Editor({ setContent, setCharCount }: EditorProps) {
+  const [tweets, setTweets] = useLocalStorage<string[]>("tweets", []);
   const [selection, setSelection] = useState("");
-  // const [initialConfig, setInitialConfig] = useState({
   const pathname = usePathname();
+  const tweetName = pathname.split("/").pop() as string;
   const initialConfig = {
     namespace: "MyEditor",
     theme,
     onError,
     nodes: [AutoLinkNode],
-    editorState: loadLocalContent(pathname),
+    editorState: loadLocalContent(`tweet-${tweetName}`),
   };
-  // const editorStateRef = useRef();
-
-  // useEffect(() => {
-  //   async () => {
-  //     const initialEditorState = await loadLocalContent(pathname);
-  //     setInitialConfig((config) => ({
-  //       ...config,
-  //       editorState: initialEditorState,
-  //     }));
-  //   };
-  // }, [pathname]);
 
   // When the editor changes, you can get notified via the
   // LexicalOnChangePlugin!
   function onChange(editorState: any) {
-    // editorStateRef.current = editorState
-    localStorage.setItem(pathname, JSON.stringify(editorState));
-    // pathname after last slash
-    console.log("onChange", editorState, pathname.split("/").pop());
+    if (!tweets.includes(tweetName)) {
+      setTweets([...tweets, tweetName]);
+    }
+
+    localStorage.setItem(`tweet-${tweetName}`, JSON.stringify(editorState));
+
     editorState.read(() => {
       // Read the contents of the EditorState here.
       const root = $getRoot();
       const selection = $getSelection();
-      console.log(editorState);
-
-      // console.log(
-      //   root,
-      //   selection
-      // );
+      // console.log(editorState);
 
       if ($isRangeSelection(selection)) {
         const anchorOffset = selection.anchor.offset;
@@ -167,7 +156,7 @@ function Editor({ setContent, setCharCount }: EditorProps) {
         // if the node is the anchor node, get the text from the anchor offset to the
         let selectedText = "";
         nodes.forEach((node: any) => {
-          console.log(node);
+          // console.log(node);
 
           if (anchorKey === focusKey) {
             if (
@@ -263,7 +252,7 @@ function Editor({ setContent, setCharCount }: EditorProps) {
         />
         <OnChangePlugin onChange={onChange} />
         <HistoryPlugin />
-        <MyCustomAutoFocusPlugin />
+        <AutoFocusPlugin />
         <AutoLinkPlugin matchers={MATCHERS} />
         <ClearEditorPlugin />
         <Toolbar selection={selection} />

@@ -1,11 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import Editor from "./editor";
 
@@ -34,7 +29,8 @@ const CharCounter = () => {
   }, [charCount]);
 
   return (
-    <div className="flex-col"
+    <div
+      className="flex-col"
       onKeyUp={() => {
         setSelection(window?.getSelection()?.toString() ?? "");
       }}
@@ -43,7 +39,7 @@ const CharCounter = () => {
         <Card
           className={cn(
             "flex-auto",
-            over280 ? "border-red-400 shadow-red-400" : ""
+            over280 ? "border-red-400 shadow-red-400" : "",
           )}
         >
           <CardHeader className="text-center">
@@ -56,7 +52,7 @@ const CharCounter = () => {
         <Card
           className={cn(
             "flex-auto",
-            over4000 ? "border-red-400 shadow-red-400" : ""
+            over4000 ? "border-red-400 shadow-red-400" : "",
           )}
         >
           <CardHeader className="text-center">
@@ -70,7 +66,7 @@ const CharCounter = () => {
       <div className="flex flex-col gap-2">
         <Editor setContent={setContent} setCharCount={setCharCount} />
       </div>
-    </div >
+    </div>
   );
 };
 
