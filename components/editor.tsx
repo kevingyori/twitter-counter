@@ -1,24 +1,31 @@
-import { $getRoot, $getSelection, $isRangeSelection, CLEAR_EDITOR_COMMAND } from 'lexical';
-import { useEffect, useState } from 'react';
+import {
+  $getRoot,
+  $getSelection,
+  $isRangeSelection,
+  CLEAR_EDITOR_COMMAND,
+} from "lexical";
+import { useEffect, useRef, useState } from "react";
 
-import { LexicalComposer } from '@lexical/react/LexicalComposer';
-import { PlainTextPlugin } from '@lexical/react/LexicalPlainTextPlugin';
-import { ContentEditable } from '@lexical/react/LexicalContentEditable';
-import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
-import { AutoLinkPlugin } from '@lexical/react/LexicalAutoLinkPlugin';
-import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
-import { ClearEditorPlugin } from '@lexical/react/LexicalClearEditorPlugin';
-import { AutoLinkNode } from '@lexical/link';
-import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import LexicalErrorBoundary from '@lexical/react/LexicalErrorBoundary';
-import { PLACEHOLDER, URL_REGEX } from '@/lib/constants';
-import { getCharCount } from '@/lib/getCharCount';
-import { Button } from './ui/button';
-import { ClipboardCopy, Eraser } from 'lucide-react';
+import { LexicalComposer } from "@lexical/react/LexicalComposer";
+import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
+import { ContentEditable } from "@lexical/react/LexicalContentEditable";
+import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
+import { AutoLinkPlugin } from "@lexical/react/LexicalAutoLinkPlugin";
+import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
+import { ClearEditorPlugin } from "@lexical/react/LexicalClearEditorPlugin";
+import { AutoLinkNode } from "@lexical/link";
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
+import { PLACEHOLDER, URL_REGEX } from "@/lib/constants";
+import { getCharCount } from "@/lib/getCharCount";
+import { Button } from "./ui/button";
+import { ClipboardCopy, Eraser } from "lucide-react";
+import { loadLocalContent } from "@/lib/loadLocalState";
+import { usePathname } from "next/navigation";
 
 const theme = {
-  link: "highlight"
-}
+  link: "highlight",
+};
 
 const URL_MATCHER = URL_REGEX;
 
@@ -33,8 +40,8 @@ const MATCHERS = [
       index: match.index,
       length: fullMatch.length,
       text: fullMatch,
-      class: 'text-blue-500',
-      url: fullMatch.startsWith('http') ? fullMatch : `https://${fullMatch}`,
+      class: "text-blue-500",
+      url: fullMatch.startsWith("http") ? fullMatch : `https://${fullMatch}`,
     };
   },
 ];
@@ -54,27 +61,29 @@ function MyCustomAutoFocusPlugin() {
   return null;
 }
 
-
 function Toolbar({ selection }: { selection: string }) {
   const [editor] = useLexicalComposerContext();
 
   const handleClear = () => {
     editor.update(() => {
       $getRoot().clear();
-    })
+    });
   };
 
   const handleCopy = () => {
     editor.update(() => {
       const root = $getRoot();
-      const text = root.__cachedText ?? '';
+      const text = root.__cachedText ?? "";
       navigator.clipboard.writeText(text);
-    })
+    });
   };
 
   return (
-    <div className='pt-2'>
-      <span className="text-gray-500" > {getCharCount(selection)} characters selected </span >
+    <div className="pt-2">
+      <span className="text-gray-500">
+        {" "}
+        {getCharCount(selection)} characters selected{" "}
+      </span>
       <div className="flex flex-col md:flex-row mt-5 gap-5">
         <Button
           className="flex-auto"
@@ -102,29 +111,45 @@ function onError(error: Error) {
 // <Editor content={content} setContent={setContent} setCharCount={setCharCount} setSelection={setSelection} />
 
 type EditorProps = {
-  setContent: React.Dispatch<React.SetStateAction<string>>,
-  setCharCount: React.Dispatch<React.SetStateAction<number>>,
+  setContent: React.Dispatch<React.SetStateAction<string>>;
+  setCharCount: React.Dispatch<React.SetStateAction<number>>;
 };
 
 function Editor({ setContent, setCharCount }: EditorProps) {
-  const [selection, setSelection] = useState('');
+  const [selection, setSelection] = useState("");
+  // const [initialConfig, setInitialConfig] = useState({
+  const pathname = usePathname();
   const initialConfig = {
-    namespace: 'MyEditor',
+    namespace: "MyEditor",
     theme,
     onError,
-    nodes: [
-      AutoLinkNode
-    ]
+    nodes: [AutoLinkNode],
+    editorState: loadLocalContent(pathname),
   };
+  // const editorStateRef = useRef();
+
+  // useEffect(() => {
+  //   async () => {
+  //     const initialEditorState = await loadLocalContent(pathname);
+  //     setInitialConfig((config) => ({
+  //       ...config,
+  //       editorState: initialEditorState,
+  //     }));
+  //   };
+  // }, [pathname]);
 
   // When the editor changes, you can get notified via the
   // LexicalOnChangePlugin!
   function onChange(editorState: any) {
+    // editorStateRef.current = editorState
+    localStorage.setItem(pathname, JSON.stringify(editorState));
+    // pathname after last slash
+    console.log("onChange", editorState, pathname.split("/").pop());
     editorState.read(() => {
       // Read the contents of the EditorState here.
       const root = $getRoot();
       const selection = $getSelection();
-
+      console.log(editorState);
 
       // console.log(
       //   root,
@@ -139,24 +164,36 @@ function Editor({ setContent, setCharCount }: EditorProps) {
         const nodes = selection.getNodes();
 
         // go through each node and get the text
-        // if the node is the anchor node, get the text from the anchor offset to the 
-        let selectedText = '';
+        // if the node is the anchor node, get the text from the anchor offset to the
+        let selectedText = "";
         nodes.forEach((node: any) => {
           console.log(node);
 
           if (anchorKey === focusKey) {
-            if (node.__key === anchorKey && node.__type === 'text' && anchorOffset > focusOffset) {
+            if (
+              node.__key === anchorKey &&
+              node.__type === "text" &&
+              anchorOffset > focusOffset
+            ) {
               // console.log('anchor:', node.__text);
               selectedText += node.__text.slice(focusOffset, anchorOffset);
             }
-            if (node.__key === anchorKey && node.__type === 'text' && anchorOffset < focusOffset) {
+            if (
+              node.__key === anchorKey &&
+              node.__type === "text" &&
+              anchorOffset < focusOffset
+            ) {
               // console.log('anchor:', node.__text);
               selectedText += node.__text.slice(anchorOffset, focusOffset);
             }
           }
 
           if (anchorKey < focusKey) {
-            if (node.__key > anchorKey && node.__key < focusKey && node.__type === 'text') {
+            if (
+              node.__key > anchorKey &&
+              node.__key < focusKey &&
+              node.__type === "text"
+            ) {
               // console.log('between:', node);
               selectedText += node.__text;
             }
@@ -173,7 +210,11 @@ function Editor({ setContent, setCharCount }: EditorProps) {
           }
 
           if (anchorKey > focusKey) {
-            if (node.__key < anchorKey && node.__key > focusKey && node.__type === 'text') {
+            if (
+              node.__key < anchorKey &&
+              node.__key > focusKey &&
+              node.__type === "text"
+            ) {
               // console.log('between:', node);
               selectedText += node.__text;
             }
@@ -188,7 +229,6 @@ function Editor({ setContent, setCharCount }: EditorProps) {
               selectedText += node.__text.slice(focusOffset);
             }
           }
-
         });
         console.log(selectedText);
         setSelection(selectedText);
@@ -200,25 +240,24 @@ function Editor({ setContent, setCharCount }: EditorProps) {
         //   setSelection(selectedText ?? '');
         // }
       } else {
-        setSelection('');
+        setSelection("");
       }
 
-      setContent(root.__cachedText ?? '');
-      setCharCount(getCharCount(root.__cachedText ?? ''));
-
+      setContent(root.__cachedText ?? "");
+      setCharCount(getCharCount(root.__cachedText ?? ""));
     });
-
   }
 
   return (
     <LexicalComposer initialConfig={initialConfig}>
-      <div className='relative'>
+      <div className="relative">
         <PlainTextPlugin
           contentEditable={
             <ContentEditable
               spellCheck={true}
-              className='md:w-[60ch] mt-5 min-h-[200px] text-lg flex w-full rounded-md border border-input bg-background px-3 py-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 relative'
-            />}
+              className="md:w-[60ch] mt-5 min-h-[200px] text-lg flex w-full rounded-md border border-input bg-background px-3 py-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 relative"
+            />
+          }
           placeholder={<Placeholder />}
           ErrorBoundary={LexicalErrorBoundary}
         />
@@ -235,8 +274,10 @@ function Editor({ setContent, setCharCount }: EditorProps) {
 
 function Placeholder() {
   return (
-    <div className='absolute top-7 left-3 text-lg text-muted-foreground select-none cursor-text'>{PLACEHOLDER}</div>
-  )
+    <div className="absolute top-7 left-3 text-lg text-muted-foreground select-none cursor-text">
+      {PLACEHOLDER}
+    </div>
+  );
 }
 
 export default Editor;
