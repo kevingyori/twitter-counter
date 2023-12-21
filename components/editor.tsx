@@ -24,6 +24,8 @@ import { ClipboardCopy, Eraser } from "lucide-react";
 import { loadLocalContent } from "@/lib/loadLocalState";
 import { usePathname } from "next/navigation";
 import { useLocalStorage } from "@uidotdev/usehooks";
+import { LocalTweet, LocalTweets } from "./types";
+import { formatTweetName } from "@/lib/utils";
 
 const theme = {
   link: "highlight",
@@ -118,31 +120,40 @@ type EditorProps = {
 };
 
 function Editor({ setContent, setCharCount }: EditorProps) {
-  const [tweets, setTweets] = useLocalStorage<string[]>("tweets", []);
+  const [tweets, setTweets] = useLocalStorage<LocalTweets>("tweets", []);
   const [selection, setSelection] = useState("");
   const pathname = usePathname();
-  const tweetName = pathname.split("/").pop() as string;
+  const tweetId = pathname.split("/").pop() as string;
   const initialConfig = {
     namespace: "MyEditor",
     theme,
     onError,
     nodes: [AutoLinkNode],
-    editorState: loadLocalContent(`tweet-${tweetName}`),
+    editorState: loadLocalContent(`tweet-${tweetId}`),
   };
 
   // When the editor changes, you can get notified via the
   // LexicalOnChangePlugin!
   function onChange(editorState: any) {
-    if (!tweets.includes(tweetName)) {
-      setTweets([...tweets, tweetName]);
+    if (tweets.filter((tweet) => tweet?.id === tweetId).length === 0) {
+      setTweets((t) => [
+        ...t,
+        {
+          id: tweetId,
+          displayName: formatTweetName(tweetId),
+          createdAt: Date.now().toString(),
+        } as LocalTweet,
+      ]);
     }
 
-    localStorage.setItem(`tweet-${tweetName}`, JSON.stringify(editorState));
+    localStorage.setItem(`tweet-${tweetId}`, JSON.stringify(editorState));
+    // console.log(JSON.stringify(editorState));
 
     editorState.read(() => {
       // Read the contents of the EditorState here.
       const root = $getRoot();
       const selection = $getSelection();
+      // console.log(root);
       // console.log(editorState);
 
       if ($isRangeSelection(selection)) {
