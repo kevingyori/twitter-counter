@@ -6,7 +6,7 @@ import { useLocalStorage } from "@uidotdev/usehooks";
 import Link from "next/link";
 import { randomName } from "@/lib/utils";
 import { LocalTweets } from "./types";
-import { createRef, useEffect, useState } from "react";
+import { RefObject, createRef, useEffect, useState } from "react";
 
 const useFocusInput = (tweets: LocalTweets, newlyEditableTweet: string) => {
   const inputRefs = tweets.map(() => createRef());
@@ -16,7 +16,8 @@ const useFocusInput = (tweets: LocalTweets, newlyEditableTweet: string) => {
     if (newlyEditableTweet !== "") {
       const index = tweets.findIndex((e) => e.id === newlyEditableTweet);
       if (index !== -1 && inputRefs[index].current) {
-        const input = inputRefs[index].current as HTMLInputElement;
+        const input = inputRefs[index].current;
+        // @ts-ignore
         input.focus();
       }
     }
@@ -76,6 +77,7 @@ export const ListOfTweets = () => {
           {editableTweets.includes(tweet.id as string) ? (
             <input
               className="bg-gray-50 p-2 inline-block w-1/2 rounded-lg"
+              // @ts-ignore
               ref={inputRefs[tweets.map((e) => e.id).indexOf(tweet.id)]}
               type="text"
               value={tweet.displayName}
