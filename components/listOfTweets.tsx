@@ -6,24 +6,32 @@ import { useLocalStorage } from "@uidotdev/usehooks";
 import Link from "next/link";
 import { randomName } from "@/lib/utils";
 import { LocalTweets } from "./types";
-import { useEffect, useRef, useState } from "react";
+import { createRef, useEffect, useState } from "react";
+
+const useFocusInput = (tweets: LocalTweets, newlyEditableTweet: string) => {
+  const inputRefs = tweets.map(() => createRef());
+  // const inputRefs = Array.from({ length: tweets.length }, () => useRef(null));
+
+  useEffect(() => {
+    if (newlyEditableTweet !== "") {
+      const index = tweets.findIndex((e) => e.id === newlyEditableTweet);
+      if (index !== -1 && inputRefs[index].current) {
+        inputRefs[index]?.current?.focus();
+      }
+    }
+  }, [newlyEditableTweet, tweets, inputRefs]);
+
+  return inputRefs;
+};
 
 export const ListOfTweets = () => {
   const [tweets, setTweets] = useLocalStorage<LocalTweets>("tweets", []);
   const [editableTweets, setEditableTweets] = useState<string[]>([]);
   const [newlyEditableTweet, setNewlyEditableTweet] = useState<string>("");
-  const inputRefs = Array.from({ length: tweets.length }, () => useRef(null));
+  const inputRefs = useFocusInput(tweets, newlyEditableTweet);
   const router = useRouter();
   const pathname = usePathname();
   const tweetId = pathname.split("/").pop();
-
-  useEffect(() => {
-    if (inputRefs.length > 0 && newlyEditableTweet !== "") {
-      inputRefs[
-        tweets.map((e) => e.id).indexOf(newlyEditableTweet)
-      ].current?.focus();
-    }
-  }, [editableTweets, inputRefs, newlyEditableTweet, tweets]);
 
   function deleteTweet(id: string) {
     setTweets(tweets.filter((tweet) => tweet.id !== id));
