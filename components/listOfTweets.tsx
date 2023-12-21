@@ -16,7 +16,8 @@ const useFocusInput = (tweets: LocalTweets, newlyEditableTweet: string) => {
     if (newlyEditableTweet !== "") {
       const index = tweets.findIndex((e) => e.id === newlyEditableTweet);
       if (index !== -1 && inputRefs[index].current) {
-        inputRefs[index]?.current?.focus();
+        const input = inputRefs[index].current as HTMLInputElement;
+        input.focus();
       }
     }
   }, [newlyEditableTweet, tweets, inputRefs]);
