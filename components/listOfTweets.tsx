@@ -8,8 +8,7 @@ import { randomName } from "@/lib/utils";
 import { LocalTweet, LocalTweets } from "./types";
 import {
   Dispatch,
-  createRef,
-  memo,
+  SetStateAction,
   useCallback,
   useEffect,
   useMemo,
@@ -21,13 +20,13 @@ function toggleEdit(
   id: string,
   editableTweets: any,
   setEditableTweets: any,
-  setNewlyEditableTweet: any
+  setNewlyEditableTweet: any,
 ) {
   if (editableTweets.includes(id)) {
-    setEditableTweets(editableTweets.filter((tweet) => tweet !== id));
+    setEditableTweets(editableTweets.filter((tweet: any) => tweet !== id));
     setNewlyEditableTweet("");
   } else {
-    setEditableTweets((e) => [...e, id]);
+    setEditableTweets((e: any) => [...e, id]);
     setNewlyEditableTweet(id);
   }
 }
@@ -35,11 +34,11 @@ function toggleEdit(
 function deleteTweet(
   id: string,
   tweetId: string,
-  tweets,
+  tweets: any,
   setTweets: any,
-  router: any
+  router: any,
 ) {
-  setTweets(tweets.filter((tweet) => tweet.id !== id));
+  setTweets(tweets.filter((tweet: any) => tweet.id !== id));
 
   localStorage.removeItem(`tweet-${id}`);
 
@@ -48,7 +47,7 @@ function deleteTweet(
       router.push(`/editor/${tweets[tweets.length - 2]?.id}`);
     } else if (tweets.length > 1 && tweets[tweets.length - 1].id !== id) {
       router.push(
-        `/editor/${tweets[tweets.map((e) => e.id).indexOf(id) + 1].id}`
+        `/editor/${tweets[tweets.map((e: any) => e.id).indexOf(id) + 1].id}`,
       );
     } else {
       router.push(`/editor/${randomName()}`);
@@ -57,22 +56,18 @@ function deleteTweet(
 }
 function DeleteButton({ handleDelete }: any) {
   return (
-    <Button
-      className="flex-auto"
-      variant="destructive"
-      onClick={(e) => handleDelete}
-    >
+    <Button className="flex-auto" variant="destructive" onClick={handleDelete}>
       <Eraser className="h-4 w-4" />
     </Button>
   );
 }
 
 type TweetCardProps = {
-  tweet: LocalTweet;
+  tweet: Partial<LocalTweet>;
   editableTweets: string[];
   setEditableTweets: Dispatch<string[]>;
   tweets: LocalTweets;
-  setTweets: Dispatch<LocalTweets>;
+  setTweets: Dispatch<SetStateAction<LocalTweets>>;
   newlyEditableTweet: string;
   setNewlyEditableTweet: Dispatch<string>;
 };
@@ -108,7 +103,13 @@ function TweetCard({
 
   function handleDelete(e: any) {
     e.stopPropagation();
-    deleteTweet(tweet.id as string, tweetId, tweets, setTweets, router);
+    deleteTweet(
+      tweet.id as string,
+      tweetId as string,
+      tweets,
+      setTweets,
+      router,
+    );
   }
 
   return (
@@ -133,15 +134,15 @@ function TweetCard({
                 tweet.id as string,
                 editableTweets,
                 setEditableTweets,
-                setNewlyEditableTweet
+                setNewlyEditableTweet,
               );
             }
           }}
           onChange={(e) => {
             setTweets((tweets: LocalTweets) =>
               tweets.map((t) =>
-                t.id === tweet.id ? { ...t, displayName: e.target.value } : t
-              )
+                t.id === tweet.id ? { ...t, displayName: e.target.value } : t,
+              ),
             );
           }}
         />
@@ -168,7 +169,7 @@ function TweetCard({
               tweet.id as string,
               editableTweets,
               setEditableTweets,
-              setNewlyEditableTweet
+              setNewlyEditableTweet,
             );
           }}
         >
