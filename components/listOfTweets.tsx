@@ -5,63 +5,189 @@ import { usePathname, useRouter } from "next/navigation";
 import { useLocalStorage } from "@uidotdev/usehooks";
 import Link from "next/link";
 import { randomName } from "@/lib/utils";
-import { LocalTweets } from "./types";
-import { RefObject, createRef, useEffect, useState } from "react";
+import { LocalTweet, LocalTweets } from "./types";
+import {
+  Dispatch,
+  createRef,
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
-const useFocusInput = (tweets: LocalTweets, newlyEditableTweet: string) => {
-  const inputRefs = tweets.map(() => createRef());
-  // const inputRefs = Array.from({ length: tweets.length }, () => useRef(null));
+function toggleEdit(
+  id: string,
+  editableTweets: any,
+  setEditableTweets: any,
+  setNewlyEditableTweet: any
+) {
+  if (editableTweets.includes(id)) {
+    setEditableTweets(editableTweets.filter((tweet) => tweet !== id));
+    setNewlyEditableTweet("");
+  } else {
+    setEditableTweets((e) => [...e, id]);
+    setNewlyEditableTweet(id);
+  }
+}
+
+function deleteTweet(
+  id: string,
+  tweetId: string,
+  tweets,
+  setTweets: any,
+  router: any
+) {
+  setTweets(tweets.filter((tweet) => tweet.id !== id));
+
+  localStorage.removeItem(`tweet-${id}`);
+
+  if (tweetId === id) {
+    if (tweets.length > 1 && tweets[tweets.length - 1].id === id) {
+      router.push(`/editor/${tweets[tweets.length - 2]?.id}`);
+    } else if (tweets.length > 1 && tweets[tweets.length - 1].id !== id) {
+      router.push(
+        `/editor/${tweets[tweets.map((e) => e.id).indexOf(id) + 1].id}`
+      );
+    } else {
+      router.push(`/editor/${randomName()}`);
+    }
+  }
+}
+function DeleteButton({ handleDelete }: any) {
+  return (
+    <Button
+      className="flex-auto"
+      variant="destructive"
+      onClick={(e) => handleDelete}
+    >
+      <Eraser className="h-4 w-4" />
+    </Button>
+  );
+}
+
+type TweetCardProps = {
+  tweet: LocalTweet;
+  editableTweets: string[];
+  setEditableTweets: Dispatch<string[]>;
+  tweets: LocalTweets;
+  setTweets: Dispatch<LocalTweets>;
+  newlyEditableTweet: string;
+  setNewlyEditableTweet: Dispatch<string>;
+};
+
+function TweetCard({
+  tweet,
+  editableTweets,
+  setEditableTweets,
+  tweets,
+  setTweets,
+  newlyEditableTweet,
+  setNewlyEditableTweet,
+}: TweetCardProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const tweetId = useMemo(() => pathname.split("/").pop(), [pathname]);
+  const inputRef = useRef<null | HTMLInputElement>(null);
+
+  const findTweetIndex = useCallback(() => {
+    return tweets.findIndex((e) => e.id === newlyEditableTweet);
+  }, [tweets, newlyEditableTweet]);
 
   useEffect(() => {
     if (newlyEditableTweet !== "") {
-      const index = tweets.findIndex((e) => e.id === newlyEditableTweet);
-      if (index !== -1 && inputRefs[index].current) {
-        const input = inputRefs[index].current;
+      const index = findTweetIndex();
+      if (index !== -1 && inputRef.current) {
+        const input = inputRef.current;
         // @ts-ignore
         input.focus();
       }
     }
-  }, [newlyEditableTweet, tweets, inputRefs]);
+  }, [newlyEditableTweet, findTweetIndex, inputRef]);
 
-  return inputRefs;
-};
+  function handleDelete(e: any) {
+    e.stopPropagation();
+    deleteTweet(tweet.id as string, tweetId, tweets, setTweets, router);
+  }
+
+  return (
+    <div
+      key={tweet.id}
+      className="rounded-lg border bg-card text-card-foreground shadow-sm p-5 flex justify-between items-center cursor-pointer"
+      onClick={() => router.push(`/editor/${tweet.id}`)}
+    >
+      {editableTweets.includes(tweet.id as string) ? (
+        <input
+          className="bg-gray-50 p-2 inline-block w-1/2 rounded-lg"
+          // @ts-ignore
+          ref={inputRef}
+          type="text"
+          value={tweet.displayName}
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              toggleEdit(
+                tweet.id as string,
+                editableTweets,
+                setEditableTweets,
+                setNewlyEditableTweet
+              );
+            }
+          }}
+          onChange={(e) => {
+            setTweets((tweets: LocalTweets) =>
+              tweets.map((t) =>
+                t.id === tweet.id ? { ...t, displayName: e.target.value } : t
+              )
+            );
+          }}
+        />
+      ) : (
+        <Link
+          href={`/editor/${tweet.id}`}
+          className={tweet.id === tweetId ? "font-bold" : ""}
+        >
+          {tweet.displayName}
+        </Link>
+      )}
+      <div className="flex gap-3">
+        <DeleteButton handleDelete={handleDelete} />
+        <Button
+          className="flex-auto"
+          variant={
+            editableTweets.includes(tweet.id as string)
+              ? "secondary"
+              : "default"
+          }
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleEdit(
+              tweet.id as string,
+              editableTweets,
+              setEditableTweets,
+              setNewlyEditableTweet
+            );
+          }}
+        >
+          {editableTweets.includes(tweet.id as string) ? (
+            <Save className="h-4 w-4" />
+          ) : (
+            <Pencil className="h-4 w-4" />
+          )}
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 export const ListOfTweets = () => {
   const [tweets, setTweets] = useLocalStorage<LocalTweets>("tweets", []);
   const [editableTweets, setEditableTweets] = useState<string[]>([]);
   const [newlyEditableTweet, setNewlyEditableTweet] = useState<string>("");
-  const inputRefs = useFocusInput(tweets, newlyEditableTweet);
   const router = useRouter();
-  const pathname = usePathname();
-  const tweetId = pathname.split("/").pop();
-
-  function deleteTweet(id: string) {
-    setTweets(tweets.filter((tweet) => tweet.id !== id));
-
-    localStorage.removeItem(`tweet-${id}`);
-
-    if (tweetId === id) {
-      if (tweets.length > 1 && tweets[tweets.length - 1].id === id) {
-        router.push(`/editor/${tweets[tweets.length - 2]?.id}`);
-      } else if (tweets.length > 1 && tweets[tweets.length - 1].id !== id) {
-        router.push(
-          `/editor/${tweets[tweets.map((e) => e.id).indexOf(id) + 1].id}`,
-        );
-      } else {
-        router.push(`/editor/${randomName()}`);
-      }
-    }
-  }
-
-  function toggleEdit(id: string) {
-    if (editableTweets.includes(id)) {
-      setEditableTweets(editableTweets.filter((tweet) => tweet !== id));
-      setNewlyEditableTweet("");
-    } else {
-      setEditableTweets((e) => [...e, id]);
-      setNewlyEditableTweet(id);
-    }
-  }
 
   return (
     <div className="flex flex-col gap-3 w-[675px]">
@@ -69,77 +195,16 @@ export const ListOfTweets = () => {
         <Plus className="mr-2 h-4 w-4" /> New
       </Button>
       {tweets.toReversed().map((tweet) => (
-        <div
+        <TweetCard
           key={tweet.id}
-          className="rounded-lg border bg-card text-card-foreground shadow-sm p-5 flex justify-between items-center cursor-pointer"
-          onClick={() => router.push(`/editor/${tweet.id}`)}
-        >
-          {editableTweets.includes(tweet.id as string) ? (
-            <input
-              className="bg-gray-50 p-2 inline-block w-1/2 rounded-lg"
-              // @ts-ignore
-              ref={inputRefs[tweets.map((e) => e.id).indexOf(tweet.id)]}
-              type="text"
-              value={tweet.displayName}
-              onClick={(e) => {
-                e.stopPropagation();
-              }}
-              onKeyPress={(e) => {
-                if (e.key === "Enter") {
-                  toggleEdit(tweet.id as string);
-                }
-              }}
-              onChange={(e) => {
-                setTweets(
-                  tweets.map((t) =>
-                    t.id === tweet.id
-                      ? { ...t, displayName: e.target.value }
-                      : t,
-                  ),
-                );
-              }}
-            />
-          ) : (
-            <Link
-              href={`/editor/${tweet.id}`}
-              className={tweet.id === tweetId ? "font-bold" : ""}
-            >
-              {tweet.displayName}
-            </Link>
-          )}
-          <div className="flex gap-3">
-            <Button
-              className="flex-auto"
-              variant="destructive"
-              onClick={(e) => {
-                e.stopPropagation();
-                deleteTweet(tweet.id as string);
-              }}
-            >
-              <Eraser className="h-4 w-4" />
-            </Button>
-            <Button
-              className="flex-auto"
-              variant={
-                editableTweets.includes(tweet.id as string)
-                  ? "secondary"
-                  : "default"
-              }
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleEdit(tweet.id as string);
-                // console.log(ref.current.innerHtml);
-                // ref.current.focus();
-              }}
-            >
-              {editableTweets.includes(tweet.id as string) ? (
-                <Save className="h-4 w-4" />
-              ) : (
-                <Pencil className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
-        </div>
+          tweet={tweet}
+          editableTweets={editableTweets}
+          setEditableTweets={setEditableTweets}
+          tweets={tweets}
+          setTweets={setTweets}
+          newlyEditableTweet={newlyEditableTweet}
+          setNewlyEditableTweet={setNewlyEditableTweet}
+        />
       ))}
     </div>
   );
