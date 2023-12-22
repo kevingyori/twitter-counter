@@ -69,6 +69,10 @@ function Toolbar({ selection }: { selection: string }) {
   const handleClear = () => {
     editor.update(() => {
       $getRoot().clear();
+
+      toast({
+        description: "The tweet has been cleared.",
+      });
     });
   };
 
@@ -116,26 +120,29 @@ function onError(error: Error) {
 }
 // <Editor content={content} setContent={setContent} setCharCount={setCharCount} setSelection={setSelection} />
 
+const defaultValue =
+  '{"root":{"children":[{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1}],"direction":null,"format":"","indent":0,"type":"root","version":1}}';
+
 type EditorProps = {
   setContent: React.Dispatch<React.SetStateAction<string>>;
   setCharCount: React.Dispatch<React.SetStateAction<number>>;
 };
 
 function Editor({ setContent, setCharCount }: EditorProps) {
-  const [tweets, setTweets] = useLocalStorage<LocalTweets>("tweets", []);
   const [selection, setSelection] = useState("");
   const pathname = usePathname();
   const tweetId = pathname.split("/").pop() as string;
+  const [content] = useLocalStorage<string>(tweetId, defaultValue);
+  const [tweets, setTweets] = useLocalStorage<LocalTweets>("tweets", []);
+
   const initialConfig = {
     namespace: "MyEditor",
     theme,
     onError,
     nodes: [AutoLinkNode],
-    editorState: loadLocalContent(`tweet-${tweetId}`),
+    editorState: content,
   };
 
-  // When the editor changes, you can get notified via the
-  // LexicalOnChangePlugin!
   function onChange(editorState: any) {
     if (tweets.filter((tweet) => tweet?.id === tweetId).length === 0) {
       setTweets((t) => [
@@ -149,14 +156,10 @@ function Editor({ setContent, setCharCount }: EditorProps) {
     }
 
     localStorage.setItem(`tweet-${tweetId}`, JSON.stringify(editorState));
-    // console.log(JSON.stringify(editorState));
 
     editorState.read(() => {
-      // Read the contents of the EditorState here.
       const root = $getRoot();
       const selection = $getSelection();
-      // console.log(root);
-      // console.log(editorState);
 
       if ($isRangeSelection(selection)) {
         const anchorOffset = selection.anchor.offset;
