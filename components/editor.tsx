@@ -1,12 +1,7 @@
 "use client";
-import {
-  $getRoot,
-  $getSelection,
-  $isRangeSelection,
-  CLEAR_EDITOR_COMMAND,
-} from "lexical";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
+import { $getRoot, $getSelection, $isRangeSelection } from "lexical";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
@@ -17,6 +12,7 @@ import { ClearEditorPlugin } from "@lexical/react/LexicalClearEditorPlugin";
 import { AutoLinkNode } from "@lexical/link";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
+
 import { PLACEHOLDER, URL_REGEX } from "@/lib/constants";
 import { getCharCount } from "@/lib/getCharCount";
 import { Button } from "./ui/button";
@@ -26,6 +22,7 @@ import { usePathname } from "next/navigation";
 import { useLocalStorage } from "@uidotdev/usehooks";
 import { LocalTweet, LocalTweets } from "./types";
 import { formatTweetName } from "@/lib/utils";
+import { useToast } from "./ui/use-toast";
 
 const theme = {
   link: "highlight",
@@ -67,6 +64,7 @@ function AutoFocusPlugin() {
 
 function Toolbar({ selection }: { selection: string }) {
   const [editor] = useLexicalComposerContext();
+  const { toast } = useToast();
 
   const handleClear = () => {
     editor.update(() => {
@@ -79,6 +77,10 @@ function Toolbar({ selection }: { selection: string }) {
       const root = $getRoot();
       const text = root.__cachedText ?? "";
       navigator.clipboard.writeText(text);
+
+      toast({
+        description: "The tweet has been copied to your clipboard.",
+      });
     });
   };
 
