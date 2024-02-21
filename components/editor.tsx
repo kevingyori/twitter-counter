@@ -72,6 +72,7 @@ function Toolbar({ selection }: { selection: string }) {
 
       toast({
         description: "The tweet has been cleared.",
+        variant: "destructive",
       });
     });
   };
