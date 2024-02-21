@@ -15,6 +15,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { toast } from "./ui/use-toast";
 
 function toggleEdit(
   id: string,
@@ -53,6 +54,12 @@ function deleteTweet(
       router.push(`/editor/${randomName()}`);
     }
   }
+
+
+  toast({
+    description: "The draft has been deleted.",
+    variant: "destructive",
+  });
 }
 function DeleteButton({ handleDelete }: any) {
   return (
