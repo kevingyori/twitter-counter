@@ -67,7 +67,7 @@ function RestoreFromLocalStoragePlugin() {
 
       if (serializedEditorState) {
         const initialEditorState = editor.parseEditorState(
-          serializedEditorState,
+          serializedEditorState ?? "",
         );
         editor.setEditorState(initialEditorState);
       }
