@@ -1,7 +1,12 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-import { $getRoot, $getSelection, $isRangeSelection } from "lexical";
+import {
+  $getRoot,
+  $getSelection,
+  $isRangeSelection,
+  EditorState,
+} from "lexical";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
@@ -46,6 +51,38 @@ const MATCHERS = [
     };
   },
 ];
+
+function RestoreFromLocalStoragePlugin() {
+  const [editor] = useLexicalComposerContext();
+  const pathname = usePathname();
+  const tweetId = pathname.split("/").pop() as string;
+  const [serializedEditorState, setSerializedEditorState] = useLocalStorage<
+    string | null
+  >(tweetId, null);
+  const isFirstRender = useRef(true);
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+
+      if (serializedEditorState) {
+        const initialEditorState = editor.parseEditorState(
+          serializedEditorState,
+        );
+        editor.setEditorState(initialEditorState);
+      }
+    }
+  }, [isFirstRender.current, serializedEditorState, editor]);
+
+  const onChange = useCallback(
+    (editorState: EditorState) => {
+      setSerializedEditorState(JSON.stringify(editorState.toJSON()));
+    },
+    [setSerializedEditorState],
+  );
+
+  return <OnChangePlugin onChange={onChange} />;
+}
 
 function AutoFocusPlugin() {
   const [editor] = useLexicalComposerContext();
@@ -124,15 +161,18 @@ function Editor({ setContent, setCharCount }: EditorProps) {
   const [selection, setSelection] = useState("");
   const pathname = usePathname();
   const tweetId = pathname.split("/").pop() as string;
-  const [content] = useLocalStorage<string>(tweetId, defaultValue);
   const [tweets, setTweets] = useLocalStorage<LocalTweets>("tweets", []);
+  const [_, setSerializedEditorState] = useLocalStorage<string | null>(
+    tweetId,
+    null,
+  );
 
   const initialConfig = {
     namespace: "MyEditor",
     theme,
     onError,
     nodes: [AutoLinkNode],
-    editorState: content,
+    // editorState: content,
   };
 
   function onChange(editorState: any) {
@@ -148,6 +188,7 @@ function Editor({ setContent, setCharCount }: EditorProps) {
     }
 
     localStorage.setItem(`tweet-${tweetId}`, JSON.stringify(editorState));
+    setSerializedEditorState(JSON.stringify(editorState.toJSON()));
 
     editorState.read(() => {
       const root = $getRoot();
@@ -264,6 +305,7 @@ function Editor({ setContent, setCharCount }: EditorProps) {
         <AutoLinkPlugin matchers={MATCHERS} />
         <ClearEditorPlugin />
         <Toolbar selection={selection} />
+        <RestoreFromLocalStoragePlugin />
       </div>
     </LexicalComposer>
   );
