@@ -55,7 +55,6 @@ function deleteTweet(
     }
   }
 
-
   toast({
     description: "The draft has been deleted.",
     variant: "destructive",
@@ -198,7 +197,7 @@ export const ListOfTweets = () => {
   const router = useRouter();
 
   return (
-    <div className="flex flex-col gap-3 w-[675px]">
+    <div className="flex flex-col gap-3 md:w-[675px] min-w-full md:min-w-1">
       <Button onClick={() => router.push(`/editor/${randomName()}`)}>
         <Plus className="mr-2 h-4 w-4" /> New
       </Button>

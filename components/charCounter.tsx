@@ -30,7 +30,7 @@ const CharCounter = () => {
 
   return (
     <div
-      className="flex-col"
+      className="flex-col min-w-full md:min-w-1"
       onKeyUp={() => {
         setSelection(window?.getSelection()?.toString() ?? "");
       }}
@@ -46,7 +46,9 @@ const CharCounter = () => {
             <CardTitle>𝕏</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-center text-4xl">{charCount}/280</div>
+            <div className="text-center md:text-4xl text-xl">
+              {charCount}/280
+            </div>
           </CardContent>
         </Card>
         <Card
@@ -59,7 +61,9 @@ const CharCounter = () => {
             <CardTitle>𝕏 Premium</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-center text-4xl">{charCount}/4000</div>
+            <div className="text-center md:text-4xl text-xl">
+              {charCount}/4000
+            </div>
           </CardContent>
         </Card>
       </div>

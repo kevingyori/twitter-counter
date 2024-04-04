@@ -11,7 +11,7 @@ export default function Home() {
   const tweetId = pathname.split("/").pop();
 
   return (
-    <main className="flex min-h-screen flex-col gap-3 items-center md:pt-24 pt-10 pb-10">
+    <main className="flex min-h-screen w-auto flex-col gap-3 px-2 items-center md:pt-24 pt-10 pb-10">
       <h2 className="text-xl h-7">
         {(tweets.filter((tweet) => tweet.id === tweetId)[0]
           ?.displayName as string) ?? " "}
