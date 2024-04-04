@@ -45,13 +45,13 @@ function deleteTweet(
 
   if (tweetId === id) {
     if (tweets.length > 1 && tweets[tweets.length - 1].id === id) {
-      router.push(`/editor/${tweets[tweets.length - 2]?.id}`);
+      router.push(`/${tweets[tweets.length - 2]?.id}`);
     } else if (tweets.length > 1 && tweets[tweets.length - 1].id !== id) {
       router.push(
-        `/editor/${tweets[tweets.map((e: any) => e.id).indexOf(id) + 1].id}`,
+        `/${tweets[tweets.map((e: any) => e.id).indexOf(id) + 1].id}`,
       );
     } else {
-      router.push(`/editor/${randomName()}`);
+      router.push(`/${randomName()}`);
     }
   }
 
@@ -122,7 +122,7 @@ function TweetCard({
     <div
       key={tweet.id}
       className="rounded-lg border bg-card text-card-foreground shadow-sm p-5 flex justify-between items-center cursor-pointer"
-      onClick={() => router.push(`/editor/${tweet.id}`)}
+      onClick={() => router.push(`/${tweet.id}`)}
     >
       {editableTweets.includes(tweet.id as string) ? (
         <input
@@ -154,7 +154,7 @@ function TweetCard({
         />
       ) : (
         <Link
-          href={`/editor/${tweet.id}`}
+          href={`/${tweet.id}`}
           className={tweet.id === tweetId ? "font-bold" : ""}
         >
           {tweet.displayName}
@@ -198,7 +198,7 @@ export const ListOfTweets = () => {
 
   return (
     <div className="flex flex-col gap-3 md:w-[675px] min-w-full md:min-w-1">
-      <Button onClick={() => router.push(`/editor/${randomName()}`)}>
+      <Button onClick={() => router.push(`/${randomName()}`)}>
         <Plus className="mr-2 h-4 w-4" /> New
       </Button>
       {tweets.toReversed().map((tweet) => (
