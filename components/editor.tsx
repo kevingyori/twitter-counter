@@ -47,15 +47,10 @@ const MATCHERS = [
   },
 ];
 
-// Lexical React plugins are React components, which makes them
-// highly composable. Furthermore, you can lazy load plugins if
-// desired, so you don't pay the cost for plugins until you
-// actually use them.
 function AutoFocusPlugin() {
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {
-    // Focus the editor when the effect fires!
     editor.focus();
   }, [editor]);
 
@@ -113,13 +108,9 @@ function Toolbar({ selection }: { selection: string }) {
   );
 }
 
-// Catch any errors that occur during Lexical updates and log them
-// or throw them as needed. If you don't throw them, Lexical will
-// try to recover gracefully without losing user data.
 function onError(error: Error) {
   console.error(error);
 }
-// <Editor content={content} setContent={setContent} setCharCount={setCharCount} setSelection={setSelection} />
 
 const defaultValue =
   '{"root":{"children":[{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1}],"direction":null,"format":"","indent":0,"type":"root","version":1}}';
