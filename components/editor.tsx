@@ -153,11 +153,11 @@ const defaultValue =
   '{"root":{"children":[{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1}],"direction":null,"format":"","indent":0,"type":"root","version":1}}';
 
 type EditorProps = {
-  setContent: React.Dispatch<React.SetStateAction<string>>;
+  // setContent: React.Dispatch<React.SetStateAction<string>>;
   setCharCount: React.Dispatch<React.SetStateAction<number>>;
 };
 
-function Editor({ setContent, setCharCount }: EditorProps) {
+function Editor({ setCharCount }: EditorProps) {
   const [selection, setSelection] = useState("");
   const pathname = usePathname();
   const tweetId = pathname.split("/").pop() as string;
@@ -281,7 +281,7 @@ function Editor({ setContent, setCharCount }: EditorProps) {
         setSelection("");
       }
 
-      setContent(root.__cachedText ?? "");
+      // setContent(root.__cachedText ?? "");
       setCharCount(getCharCount(root.__cachedText ?? ""));
     });
   }

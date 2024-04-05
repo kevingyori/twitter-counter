@@ -8,12 +8,8 @@ const CharCounter = () => {
   const [charCount, setCharCount] = useState(0);
   const [over280, setOver280] = useState(false);
   const [over4000, setOver4000] = useState(false);
-  const [content, setContent] = useState("");
-  const [selection, setSelection] = useState("");
-
-  useEffect(() => {
-    // console.log(selection);
-  }, [selection]);
+  // const [content, setContent] = useState("");
+  // const [selection, setSelection] = useState("");
 
   useEffect(() => {
     if (charCount > 280) {
@@ -31,9 +27,9 @@ const CharCounter = () => {
   return (
     <div
       className="flex-col min-w-full md:min-w-1"
-      onKeyUp={() => {
-        setSelection(window?.getSelection()?.toString() ?? "");
-      }}
+      // onKeyUp={() => {
+      //   setSelection(window?.getSelection()?.toString() ?? "");
+      // }}
     >
       <div className="flex gap-6 select-none">
         <Card
@@ -68,7 +64,7 @@ const CharCounter = () => {
         </Card>
       </div>
       <div className="flex flex-col gap-2">
-        <Editor setContent={setContent} setCharCount={setCharCount} />
+        <Editor setCharCount={setCharCount} />
       </div>
     </div>
   );
