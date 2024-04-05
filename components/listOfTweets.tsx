@@ -56,10 +56,11 @@ function deleteTweet(
   }
 
   toast({
-    description: "The draft has been deleted.",
+    description: `${tweets.filter((t: LocalTweet) => t.id === id)[0].displayName} draft was deleted.`,
     variant: "destructive",
   });
 }
+
 function DeleteButton({ handleDelete }: any) {
   return (
     <Button className="flex-auto" variant="destructive" onClick={handleDelete}>
