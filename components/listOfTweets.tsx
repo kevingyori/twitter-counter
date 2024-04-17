@@ -1,6 +1,6 @@
 "use client";
 import { Button } from "./ui/button";
-import { Eraser, Pencil, Plus, Save } from "lucide-react";
+import { Eraser, Pencil, Plus, Save, X } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useLocalStorage } from "@uidotdev/usehooks";
 import Link from "next/link";
@@ -64,7 +64,7 @@ function deleteTweet(
 function DeleteButton({ handleDelete }: any) {
   return (
     <Button className="flex-auto" variant="destructive" onClick={handleDelete}>
-      <Eraser className="h-4 w-4" />
+      <X className="h-4 w-4" />
     </Button>
   );
 }
