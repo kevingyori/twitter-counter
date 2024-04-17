@@ -4,14 +4,20 @@ import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 
 type InputFieldProps = {
-  inputRef: React.MutableRefObject<HTMLDivElement | null>,
-  content: string,
-  setContent: React.Dispatch<React.SetStateAction<string>>,
-  setCharCount: React.Dispatch<React.SetStateAction<number>>,
-  setSelection: React.Dispatch<React.SetStateAction<string>>,
+  inputRef: React.MutableRefObject<HTMLDivElement | null>;
+  content: string;
+  setContent: React.Dispatch<React.SetStateAction<string>>;
+  setCharCount: React.Dispatch<React.SetStateAction<number>>;
+  setSelection: React.Dispatch<React.SetStateAction<string>>;
 };
 
-export default function InputField({ inputRef, content, setContent, setCharCount, setSelection }: InputFieldProps) {
+export default function InputField({
+  inputRef,
+  content,
+  setContent,
+  setCharCount,
+  setSelection,
+}: InputFieldProps) {
   const [isEmpty, setIsEmpty] = useState(true);
 
   // style urls in content
@@ -34,13 +40,18 @@ export default function InputField({ inputRef, content, setContent, setCharCount
         const sortedUrls = urls.sort((a, b) => b.index - a.index);
         console.log(sortedUrls);
         sortedUrls.forEach((url) => {
-          text = text.replace(url.url, `<div class="highlight">${url.url}</div>`);
+          text = text.replace(
+            url.url,
+            `<div class="highlight">${url.url}</div>`,
+          );
           console.log(text, url.url, url.index);
           if (inputRef.current) {
             inputRef.current.innerHTML = text;
           }
           // set cursor back to original location
-          window?.getSelection()?.collapse(inputRef.current?.firstChild ?? null, cursorLocation);
+          window
+            ?.getSelection()
+            ?.collapse(inputRef.current?.firstChild ?? null, cursorLocation);
           console.log(cursorLocation);
           console.log(inputRef.current?.firstChild);
 
@@ -70,8 +81,8 @@ export default function InputField({ inputRef, content, setContent, setCharCount
       inputRef.current.textContent = "";
     }
     if (inputRef.current?.textContent !== content) {
-      setContent(inputRef.current?.innerText ?? "")
-      setCharCount(getCharCount(inputRef.current?.innerText ?? ""))
+      setContent(inputRef.current?.innerText ?? "");
+      setCharCount(getCharCount(inputRef.current?.innerText ?? ""));
     }
   };
 
@@ -79,8 +90,9 @@ export default function InputField({ inputRef, content, setContent, setCharCount
     <div>
       <div
         contentEditable
-        className={cn("md:w-[60ch] mt-5 min-h-[200px] text-lg flex w-full rounded-md border border-input bg-background px-3 py-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-colors hyphens-auto break-words",
-          isEmpty ? "text-muted-foreground select-none" : "text-foreground"
+        className={cn(
+          "md:w-[60ch] mt-5 min-h-[200px] text-lg flex w-full rounded-md border border-input bg-background px-3 py-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-colors hyphens-auto break-words",
+          isEmpty ? "text-muted-foreground select-none" : "text-foreground",
         )}
         onInput={handleContentChange}
         ref={inputRef}
@@ -92,7 +104,7 @@ export default function InputField({ inputRef, content, setContent, setCharCount
         }}
         onBlurCapture={() => {
           // console.log("blur", window?.getSelection()?.toString());
-          setSelection('');
+          setSelection("");
 
           // reset "Start typing!" placeholder
           if (inputRef.current?.textContent === "") {
@@ -108,9 +120,7 @@ export default function InputField({ inputRef, content, setContent, setCharCount
           }
         }}
       >
-        <p>
-          {content ? content : PLACEHOLDER}
-        </p>
+        <p>{content ? content : PLACEHOLDER}</p>
       </div>
     </div>
   );
