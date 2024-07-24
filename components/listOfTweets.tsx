@@ -1,20 +1,20 @@
 "use client";
-import { Button } from "./ui/button";
-import { Eraser, Pencil, Plus, Save, X } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
-import { useLocalStorage } from "@uidotdev/usehooks";
-import Link from "next/link";
 import { randomName } from "@/lib/utils";
-import { LocalTweet, LocalTweets } from "./types";
+import { useLocalStorage } from "@uidotdev/usehooks";
+import { Pencil, Plus, Save, X } from "lucide-react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import {
-  Dispatch,
-  SetStateAction,
+  type Dispatch,
+  type SetStateAction,
   useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
+import type { LocalTweet, LocalTweets } from "./types";
+import { Button } from "./ui/button";
 import { toast } from "./ui/use-toast";
 
 function toggleEdit(
@@ -106,7 +106,7 @@ function TweetCard({
         input.focus();
       }
     }
-  }, [newlyEditableTweet, findTweetIndex, inputRef]);
+  }, [newlyEditableTweet, findTweetIndex]);
 
   function handleDelete(e: any) {
     e.stopPropagation();
@@ -123,7 +123,7 @@ function TweetCard({
     <div
       key={tweet.id}
       className="rounded-lg border bg-card text-card-foreground shadow-sm p-5 flex justify-between items-center cursor-pointer"
-      onClick={() => router.push(`/${tweet.id}`)}
+      onKeyUp={() => router.push(`/${tweet.id}`)}
     >
       {editableTweets.includes(tweet.id as string) ? (
         <input

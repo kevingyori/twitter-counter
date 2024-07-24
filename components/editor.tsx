@@ -1,43 +1,41 @@
 "use client";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { AutoLinkNode } from "@lexical/link";
+import { AutoLinkPlugin } from "@lexical/react/LexicalAutoLinkPlugin";
+import { ClearEditorPlugin } from "@lexical/react/LexicalClearEditorPlugin";
+import { LexicalComposer } from "@lexical/react/LexicalComposer";
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { ContentEditable } from "@lexical/react/LexicalContentEditable";
+import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
+import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
+import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
+import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
 import {
   $getRoot,
   $getSelection,
   $isRangeSelection,
-  EditorState,
+  type EditorState,
 } from "lexical";
-import { LexicalComposer } from "@lexical/react/LexicalComposer";
-import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
-import { ContentEditable } from "@lexical/react/LexicalContentEditable";
-import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
-import { AutoLinkPlugin } from "@lexical/react/LexicalAutoLinkPlugin";
-import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
-import { ClearEditorPlugin } from "@lexical/react/LexicalClearEditorPlugin";
-import { AutoLinkNode } from "@lexical/link";
-import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
 
 import { PLACEHOLDER, URL_REGEX } from "@/lib/constants";
 import { getCharCount } from "@/lib/getCharCount";
-import { Button } from "./ui/button";
-import { ClipboardCopy, Eraser } from "lucide-react";
 import { loadLocalContent } from "@/lib/loadLocalState";
-import { usePathname } from "next/navigation";
-import { useLocalStorage } from "@uidotdev/usehooks";
-import { LocalTweet, LocalTweets } from "./types";
 import { formatTweetName } from "@/lib/utils";
+import { useLocalStorage } from "@uidotdev/usehooks";
+import { ClipboardCopy, Eraser } from "lucide-react";
+import { usePathname } from "next/navigation";
+import type { LocalTweet, LocalTweets } from "./types";
+import { Button } from "./ui/button";
 import { useToast } from "./ui/use-toast";
 
 const theme = {
-  link: "highlight",
+  link: "autolink",
 };
-
-const URL_MATCHER = URL_REGEX;
 
 const MATCHERS = [
   (text: string) => {
-    const match = URL_MATCHER.exec(text);
+    const match = URL_REGEX.exec(text);
     if (match === null) {
       return null;
     }
@@ -46,10 +44,25 @@ const MATCHERS = [
       index: match.index,
       length: fullMatch.length,
       text: fullMatch,
-      class: "text-blue-500",
+      attributes: { rel: "theme-link" },
       url: fullMatch.startsWith("http") ? fullMatch : `https://${fullMatch}`,
     };
   },
+  // (text: string) => {
+  //   const AFTER_280_REGEX = /.{280}(.+)/gm;
+  //   const match = AFTER_280_REGEX.exec(text);
+  //   if (match === null) {
+  //     return null;
+  //   }
+  //   const fullMatch = match[1];
+  //   console.log(match);
+  //   return {
+  //     index: match[0].length - match[1].length,
+  //     length: fullMatch.length,
+  //     text: fullMatch,
+  //     attributes: { rel: "theme-280" },
+  //   };
+  // },
 ];
 
 function RestoreFromLocalStoragePlugin() {
@@ -94,7 +107,7 @@ function AutoFocusPlugin() {
   return null;
 }
 
-function Toolbar({ selection }: { selection: string }) {
+const Toolbar = memo(({ selection }: { selection: string }) => {
   const [editor] = useLexicalComposerContext();
   const { toast } = useToast();
 
@@ -143,7 +156,7 @@ function Toolbar({ selection }: { selection: string }) {
       </div>
     </div>
   );
-}
+});
 
 function onError(error: Error) {
   console.error(error);
@@ -169,30 +182,37 @@ function Editor({ setCharCount }: EditorProps) {
 
   const initialConfig = {
     namespace: "MyEditor",
-    theme,
+    theme: theme,
     onError,
     nodes: [AutoLinkNode],
     // editorState: content,
   };
 
-  function onChange(editorState: any) {
-    if (tweets.filter((tweet) => tweet?.id === tweetId).length === 0) {
-      setTweets((t) => [
-        ...t,
-        {
-          id: tweetId,
-          displayName: formatTweetName(tweetId),
-          createdAt: Date.now().toString(),
-        } as LocalTweet,
-      ]);
-    }
+  function truncate(str: string, n: number) {
+    return str.length > n ? `${str.substr(0, n - 1)}...` : str;
+  }
 
+  function onChange(editorState: any) {
     localStorage.setItem(`tweet-${tweetId}`, JSON.stringify(editorState));
     setSerializedEditorState(JSON.stringify(editorState.toJSON()));
 
     editorState.read(() => {
       const root = $getRoot();
       const selection = $getSelection();
+
+      if (tweets.filter((tweet) => tweet?.id === tweetId).length === 0) {
+        setTweets((t) => [
+          ...t,
+          {
+            id: tweetId,
+            displayName:
+              root.__cachedText === undefined
+                ? formatTweetName(truncate(root.__cachedText, 10))
+                : formatTweetName(tweetId),
+            createdAt: Date.now().toString(),
+          } as LocalTweet,
+        ]);
+      }
 
       if ($isRangeSelection(selection)) {
         const anchorOffset = selection.anchor.offset;
@@ -204,7 +224,7 @@ function Editor({ setCharCount }: EditorProps) {
         // go through each node and get the text
         // if the node is the anchor node, get the text from the anchor offset to the
         let selectedText = "";
-        nodes.forEach((node: any) => {
+        for (const node of nodes) {
           // console.log(node);
 
           if (anchorKey === focusKey) {
@@ -267,8 +287,8 @@ function Editor({ setCharCount }: EditorProps) {
               selectedText += node.__text.slice(focusOffset);
             }
           }
-        });
-        console.log(selectedText);
+        }
+        // console.log(selectedText);
         setSelection(selectedText);
 
         // if (anchorOffset !== focusOffset) {

@@ -1,9 +1,10 @@
 "use client";
 import CharCounter from "@/components/charCounter";
 import { ListOfTweets } from "@/components/listOfTweets";
+import type { LocalTweets } from "@/components/types";
+import { Toaster } from "@/components/ui/toaster";
 import { useLocalStorage } from "@uidotdev/usehooks";
 import { usePathname } from "next/navigation";
-import { LocalTweets } from "@/components/types";
 
 export default function Home() {
   const [tweets] = useLocalStorage<LocalTweets>("tweets", []);
@@ -18,6 +19,7 @@ export default function Home() {
       </h2>
       <CharCounter />
       <ListOfTweets />
+      <Toaster />
     </main>
   );
 }
