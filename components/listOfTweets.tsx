@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   type Dispatch,
+  memo,
   type SetStateAction,
   useCallback,
   useEffect,
@@ -27,15 +28,15 @@ function formatDate(date: string) {
 
 function toggleEdit(
   id: string,
-  editableTweets: any,
-  setEditableTweets: any,
-  setNewlyEditableTweet: any,
+  editableTweets: string[],
+  setEditableTweets: Dispatch<string[]>,
+  setNewlyEditableTweet: Dispatch<string>,
 ) {
   if (editableTweets.includes(id)) {
-    setEditableTweets(editableTweets.filter((tweet: any) => tweet !== id));
+    setEditableTweets(editableTweets.filter((tweet) => tweet !== id));
     setNewlyEditableTweet("");
   } else {
-    setEditableTweets((e: any) => [...e, id]);
+    setEditableTweets((e: string[]) => [...e, id]);
     setNewlyEditableTweet(id);
   }
 }
@@ -87,7 +88,7 @@ type TweetCardProps = {
   setNewlyEditableTweet: Dispatch<string>;
 };
 
-function TweetCard({
+const TweetCard = memo(function TweetCard({
   tweet,
   editableTweets,
   setEditableTweets,
@@ -131,12 +132,12 @@ function TweetCard({
     <div
       key={tweet.id}
       className="rounded-lg border bg-card text-card-foreground shadow-sm p-5 flex justify-between items-center cursor-pointer"
-      onKeyUp={() => router.push(`/${tweet.id}`)}
+      onClick={() => router.push(`/${tweet.id}`)}
     >
-      <div className="flex flex-col">
+      <div className="flex flex-col w-1/2">
         {editableTweets.includes(tweet.id as string) ? (
           <input
-            className="bg-gray-50 p-2 inline-block w-1/2 rounded-lg"
+            className="bg-gray-50 p-2 inline-block rounded-lg"
             // @ts-ignore
             ref={inputRef}
             type="text"
@@ -202,9 +203,9 @@ function TweetCard({
       </div>
     </div>
   );
-}
+});
 
-export const ListOfTweets = () => {
+const ListOfTweets = memo(() => {
   const [tweets, setTweets] = useLocalStorage<LocalTweets>("tweets", []);
   const [editableTweets, setEditableTweets] = useState<string[]>([]);
   const [newlyEditableTweet, setNewlyEditableTweet] = useState<string>("");
@@ -215,18 +216,23 @@ export const ListOfTweets = () => {
       <Button onClick={() => router.push(`/${randomName()}`)}>
         <Plus className="mr-2 h-4 w-4" /> New
       </Button>
-      {tweets.toReversed().map((tweet) => (
-        <TweetCard
-          key={tweet.id}
-          tweet={tweet}
-          editableTweets={editableTweets}
-          setEditableTweets={setEditableTweets}
-          tweets={tweets}
-          setTweets={setTweets}
-          newlyEditableTweet={newlyEditableTweet}
-          setNewlyEditableTweet={setNewlyEditableTweet}
-        />
-      ))}
+      {tweets.length > 0 &&
+        tweets
+          .sort((a, b) => b?.createdAt - a?.createdAt)
+          .map((tweet) => (
+            <TweetCard
+              key={tweet.id}
+              tweet={tweet}
+              editableTweets={editableTweets}
+              setEditableTweets={setEditableTweets}
+              tweets={tweets}
+              setTweets={setTweets}
+              newlyEditableTweet={newlyEditableTweet}
+              setNewlyEditableTweet={setNewlyEditableTweet}
+            />
+          ))}
     </div>
   );
-};
+});
+
+export { ListOfTweets };

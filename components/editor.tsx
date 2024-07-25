@@ -94,7 +94,7 @@ function AutoFocusPlugin() {
   return null;
 }
 
-const CharCount = memo(({ selection }: { selection: string }) => {
+const SelectionCount = memo(({ selection }: { selection: string }) => {
   return (
     <span className="text-gray-500">
       {" "}
@@ -154,6 +154,14 @@ function onError(error: Error) {
   console.error(error);
 }
 
+const initialConfig = {
+  namespace: "TweetEditor",
+  theme: theme,
+  onError,
+  nodes: [AutoLinkNode],
+  // editorState: content,
+};
+
 function Editor({ setCharCount }: { setCharCount: React.Dispatch<number> }) {
   const [selection, setSelection] = useState("");
   const pathname = usePathname();
@@ -164,22 +172,12 @@ function Editor({ setCharCount }: { setCharCount: React.Dispatch<number> }) {
     null,
   );
 
-  const initialConfig = {
-    namespace: "MyEditor",
-    theme: theme,
-    onError,
-    nodes: [AutoLinkNode],
-    // editorState: content,
-  };
-
   // function truncate(str: string, n: number) {
   //   // return str.length > n ? `${str.substr(0, n - 1)}...` : str;
   //   return str.length > n ? `${str.slice(0, n)}...` : str;
   // }
 
-  const onSelection = useCallback(function onSelection(
-    editorState: EditorState,
-  ) {
+  const onSelection = useCallback((editorState: EditorState) => {
     editorState.read(() => {
       const selection = $getSelection();
 
@@ -324,7 +322,7 @@ function Editor({ setCharCount }: { setCharCount: React.Dispatch<number> }) {
         <ClearEditorPlugin />
         <RestoreFromLocalStoragePlugin />
         <div className="pt-2">
-          <CharCount selection={selection} />
+          <SelectionCount selection={selection} />
           <Toolbar />
         </div>
       </div>
@@ -334,7 +332,7 @@ function Editor({ setCharCount }: { setCharCount: React.Dispatch<number> }) {
 
 function Placeholder() {
   return (
-    <div className="absolute top-7 left-3 text-lg text-muted-foreground select-none cursor-text">
+    <div className="absolute top-2 left-3 text-lg text-muted-foreground select-none cursor-text">
       {PLACEHOLDER}
     </div>
   );
