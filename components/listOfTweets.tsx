@@ -17,6 +17,14 @@ import type { LocalTweet, LocalTweets } from "./types";
 import { Button } from "./ui/button";
 import { toast } from "./ui/use-toast";
 
+function formatDate(date: string) {
+  return new Date(Number(date)).toLocaleDateString("en-GB", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
 function toggleEdit(
   id: string,
   editableTweets: any,
@@ -125,42 +133,47 @@ function TweetCard({
       className="rounded-lg border bg-card text-card-foreground shadow-sm p-5 flex justify-between items-center cursor-pointer"
       onKeyUp={() => router.push(`/${tweet.id}`)}
     >
-      {editableTweets.includes(tweet.id as string) ? (
-        <input
-          className="bg-gray-50 p-2 inline-block w-1/2 rounded-lg"
-          // @ts-ignore
-          ref={inputRef}
-          type="text"
-          value={tweet.displayName}
-          onClick={(e) => {
-            e.stopPropagation();
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              toggleEdit(
-                tweet.id as string,
-                editableTweets,
-                setEditableTweets,
-                setNewlyEditableTweet,
+      <div className="flex flex-col">
+        {editableTweets.includes(tweet.id as string) ? (
+          <input
+            className="bg-gray-50 p-2 inline-block w-1/2 rounded-lg"
+            // @ts-ignore
+            ref={inputRef}
+            type="text"
+            value={tweet.displayName}
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                toggleEdit(
+                  tweet.id as string,
+                  editableTweets,
+                  setEditableTweets,
+                  setNewlyEditableTweet,
+                );
+              }
+            }}
+            onChange={(e) => {
+              setTweets((tweets: LocalTweets) =>
+                tweets.map((t) =>
+                  t.id === tweet.id ? { ...t, displayName: e.target.value } : t,
+                ),
               );
-            }
-          }}
-          onChange={(e) => {
-            setTweets((tweets: LocalTweets) =>
-              tweets.map((t) =>
-                t.id === tweet.id ? { ...t, displayName: e.target.value } : t,
-              ),
-            );
-          }}
-        />
-      ) : (
-        <Link
-          href={`/${tweet.id}`}
-          className={tweet.id === tweetId ? "font-bold" : ""}
-        >
-          {tweet.displayName}
-        </Link>
-      )}
+            }}
+          />
+        ) : (
+          <Link
+            href={`/${tweet.id}`}
+            className={tweet.id === tweetId ? "font-bold" : ""}
+          >
+            {tweet.displayName}
+          </Link>
+        )}
+        <div className="text-sm text-gray-500">
+          {formatDate(tweet.createdAt)}
+        </div>
+      </div>
       <div className="flex gap-3">
         <DeleteButton handleDelete={handleDelete} />
         <Button
