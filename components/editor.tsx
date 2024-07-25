@@ -40,6 +40,7 @@ const MATCHERS = [
       return null;
     }
     const fullMatch = match[0];
+
     return {
       index: match.index,
       length: fullMatch.length,
@@ -48,21 +49,6 @@ const MATCHERS = [
       url: fullMatch.startsWith("http") ? fullMatch : `https://${fullMatch}`,
     };
   },
-  // (text: string) => {
-  //   const AFTER_280_REGEX = /.{280}(.+)/gm;
-  //   const match = AFTER_280_REGEX.exec(text);
-  //   if (match === null) {
-  //     return null;
-  //   }
-  //   const fullMatch = match[1];
-  //   console.log(match);
-  //   return {
-  //     index: match[0].length - match[1].length,
-  //     length: fullMatch.length,
-  //     text: fullMatch,
-  //     attributes: { rel: "theme-280" },
-  //   };
-  // },
 ];
 
 function RestoreFromLocalStoragePlugin() {
@@ -82,10 +68,11 @@ function RestoreFromLocalStoragePlugin() {
         const initialEditorState = editor.parseEditorState(
           serializedEditorState ?? "",
         );
+        // TODO: error here wtf
         editor.setEditorState(initialEditorState);
       }
     }
-  }, [isFirstRender.current, serializedEditorState, editor]);
+  }, [serializedEditorState, editor]);
 
   const onChange = useCallback(
     (editorState: EditorState) => {
@@ -107,7 +94,16 @@ function AutoFocusPlugin() {
   return null;
 }
 
-const Toolbar = memo(({ selection }: { selection: string }) => {
+const CharCount = memo(({ selection }: { selection: string }) => {
+  return (
+    <span className="text-gray-500">
+      {" "}
+      {getCharCount(selection)} characters selected{" "}
+    </span>
+  );
+});
+
+const Toolbar = memo(() => {
   const [editor] = useLexicalComposerContext();
   const { toast } = useToast();
 
@@ -135,11 +131,7 @@ const Toolbar = memo(({ selection }: { selection: string }) => {
   };
 
   return (
-    <div className="pt-2">
-      <span className="text-gray-500">
-        {" "}
-        {getCharCount(selection)} characters selected{" "}
-      </span>
+    <>
       <div className="flex flex-col md:flex-row mt-5 gap-5">
         <Button
           className="flex-auto"
@@ -154,7 +146,7 @@ const Toolbar = memo(({ selection }: { selection: string }) => {
           Copy
         </Button>
       </div>
-    </div>
+    </>
   );
 });
 
@@ -162,15 +154,7 @@ function onError(error: Error) {
   console.error(error);
 }
 
-const defaultValue =
-  '{"root":{"children":[{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1}],"direction":null,"format":"","indent":0,"type":"root","version":1}}';
-
-type EditorProps = {
-  // setContent: React.Dispatch<React.SetStateAction<string>>;
-  setCharCount: React.Dispatch<React.SetStateAction<number>>;
-};
-
-function Editor({ setCharCount }: EditorProps) {
+function Editor({ setCharCount }: { setCharCount: React.Dispatch<number> }) {
   const [selection, setSelection] = useState("");
   const pathname = usePathname();
   const tweetId = pathname.split("/").pop() as string;
@@ -188,33 +172,21 @@ function Editor({ setCharCount }: EditorProps) {
     // editorState: content,
   };
 
-  function truncate(str: string, n: number) {
-    return str.length > n ? `${str.substr(0, n - 1)}...` : str;
-  }
+  // function truncate(str: string, n: number) {
+  //   // return str.length > n ? `${str.substr(0, n - 1)}...` : str;
+  //   return str.length > n ? `${str.slice(0, n)}...` : str;
+  // }
 
-  function onChange(editorState: any) {
-    localStorage.setItem(`tweet-${tweetId}`, JSON.stringify(editorState));
-    setSerializedEditorState(JSON.stringify(editorState.toJSON()));
-
+  const onSelection = useCallback(function onSelection(
+    editorState: EditorState,
+  ) {
     editorState.read(() => {
-      const root = $getRoot();
       const selection = $getSelection();
 
-      if (tweets.filter((tweet) => tweet?.id === tweetId).length === 0) {
-        setTweets((t) => [
-          ...t,
-          {
-            id: tweetId,
-            displayName:
-              root.__cachedText === undefined
-                ? formatTweetName(truncate(root.__cachedText, 10))
-                : formatTweetName(tweetId),
-            createdAt: Date.now().toString(),
-          } as LocalTweet,
-        ]);
-      }
-
-      if ($isRangeSelection(selection)) {
+      if (
+        selection !== null &&
+        selection?.anchor?.offset !== selection?.focus?.offset
+      ) {
         const anchorOffset = selection.anchor.offset;
         const anchorKey = selection.anchor.key;
         const focusOffset = selection.focus.offset;
@@ -300,11 +272,36 @@ function Editor({ setCharCount }: EditorProps) {
       } else {
         setSelection("");
       }
-
-      // setContent(root.__cachedText ?? "");
-      setCharCount(getCharCount(root.__cachedText ?? ""));
     });
-  }
+  }, []);
+
+  const onEdit = useCallback(
+    function onEdit(editorState: EditorState) {
+      localStorage.setItem(`tweet-${tweetId}`, JSON.stringify(editorState));
+      setSerializedEditorState(JSON.stringify(editorState.toJSON()));
+
+      editorState.read(() => {
+        const root = $getRoot();
+        const selection = $getSelection();
+
+        // create a new tweet if one doesn't exist in the local storage
+        if (tweets.filter((tweet) => tweet?.id === tweetId).length === 0) {
+          setTweets((t) => [
+            ...t,
+            {
+              id: tweetId,
+              displayName: formatTweetName(tweetId),
+              createdAt: Date.now().toString(),
+            } as LocalTweet,
+          ]);
+        }
+
+        // setContent(root.__cachedText ?? "");
+        setCharCount(getCharCount(root.__cachedText ?? ""));
+      });
+    },
+    [setCharCount, setSerializedEditorState, setTweets, tweetId, tweets],
+  );
 
   return (
     <LexicalComposer initialConfig={initialConfig}>
@@ -319,13 +316,17 @@ function Editor({ setCharCount }: EditorProps) {
           placeholder={<Placeholder />}
           ErrorBoundary={LexicalErrorBoundary}
         />
-        <OnChangePlugin onChange={onChange} />
+        <OnChangePlugin ignoreSelectionChange onChange={onEdit} />
+        <OnChangePlugin ignoreHistoryMergeTagChange onChange={onSelection} />
         <HistoryPlugin />
         <AutoFocusPlugin />
         <AutoLinkPlugin matchers={MATCHERS} />
         <ClearEditorPlugin />
-        <Toolbar selection={selection} />
         <RestoreFromLocalStoragePlugin />
+        <div className="pt-2">
+          <CharCount selection={selection} />
+          <Toolbar />
+        </div>
       </div>
     </LexicalComposer>
   );
