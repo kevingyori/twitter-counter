@@ -2,7 +2,6 @@
 import { useTweetStore } from "@/lib/store";
 import type { LocalTweet } from "@/lib/types";
 import { cn, formatTweetName } from "@/lib/utils";
-import { Trash, Trash2, X } from "lucide-react";
 import { type MouseEvent, memo, useCallback } from "react";
 import { Button } from "./ui/button";
 import { toast } from "./ui/use-toast";
@@ -11,8 +10,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { DotsHorizontalIcon, TrashIcon } from "@radix-ui/react-icons";
