@@ -70,7 +70,7 @@ function BottomBar({ selection }: { selection: string }) {
   return (
     <div className="flex flex-col gap-3 md:w-[675px] min-w-full md:min-w-1">
       <SelectionCount selection={selection} />
-      <Button onClick={newTweet}>
+      <Button onClick={newTweet} variant="outline">
         <Plus className="mr-2 h-4 w-4" /> New
       </Button>
     </div>

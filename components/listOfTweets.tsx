@@ -81,8 +81,8 @@ const TweetCard = memo(function TweetCard({ tweet }: TweetCardProps) {
     <div
       key={tweet.id}
       className={cn(
-        "rounded-lg border  bg-card text-card-foreground shadow-sm p-5 flex justify-between items-center cursor-pointer",
-        tweet.id === currentTweetId ? "border-black" : "",
+        "rounded-lg border bg-card text-card-foreground shadow-sm p-5 flex justify-between items-center cursor-pointer",
+        tweet.id === currentTweetId ? "border-primary" : "",
       )}
       onClick={() => {
         setCurrentTweetId(tweet.id);
