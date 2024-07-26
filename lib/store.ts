@@ -34,6 +34,7 @@ export const useTweetStore = create<Store>()(
     }),
     {
       name: "tweet-store",
+      version: 1,
     },
   ),
 );
