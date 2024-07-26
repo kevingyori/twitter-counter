@@ -2,10 +2,20 @@
 import { useTweetStore } from "@/lib/store";
 import type { LocalTweet } from "@/lib/types";
 import { cn, formatTweetName } from "@/lib/utils";
-import { X } from "lucide-react";
+import { Trash, Trash2, X } from "lucide-react";
 import { type MouseEvent, memo, useCallback } from "react";
 import { Button } from "./ui/button";
 import { toast } from "./ui/use-toast";
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { DotsHorizontalIcon, TrashIcon } from "@radix-ui/react-icons";
 
 function formatDate(date: string) {
   return new Date(Number(date)).toLocaleDateString("en-GB", {
@@ -81,7 +91,7 @@ const TweetCard = memo(function TweetCard({ tweet }: TweetCardProps) {
     <div
       key={tweet.id}
       className={cn(
-        "rounded-lg border bg-card text-card-foreground shadow-sm p-5 flex justify-between items-center cursor-pointer",
+        "rounded-lg border bg-card text-card-foreground shadow-sm p-4 flex justify-between items-center cursor-pointer",
         tweet.id === currentTweetId ? "border-primary" : "",
       )}
       onClick={() => {
@@ -94,15 +104,27 @@ const TweetCard = memo(function TweetCard({ tweet }: TweetCardProps) {
           {formatDate(tweet.createdAt)}
         </div>
       </div>
-      <div className="flex gap-3">
-        <Button
+      {/* <Button
           className="flex-auto"
           variant="destructive"
           onClick={handleDelete}
         >
           <X className="h-4 w-4" />
-        </Button>
-      </div>
+        </Button> */}
+
+      <DropdownMenu>
+        <DropdownMenuTrigger>
+          <Button variant="ghost">
+            <DotsHorizontalIcon />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem onClick={handleDelete}>
+            <TrashIcon className="h-4 w-4 mr-2" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 });
