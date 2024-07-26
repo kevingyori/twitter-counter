@@ -12,11 +12,11 @@ export default function Home() {
   const [charCount, setCharCount] = useState(0);
 
   return (
-    <main className="flex min-h-screen w-auto flex-col gap-3 px-2 items-center md:pt-24 pt-10 pb-10">
+    <main className="flex min-h-screen w-auto flex-col gap-3 px-2 items-center md:scroll-pt-12 pt-10 pb-10">
       <TweetName />
       <div className="flex-col min-w-full md:min-w-1">
-        <CharCounter charCount={charCount} />
-        <Editor setCharCount={setCharCount} />
+        <CharCounter />
+        <Editor />
       </div>
       <ListOfTweets />
       <Toaster />

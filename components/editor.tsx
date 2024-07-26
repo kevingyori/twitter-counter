@@ -1,33 +1,27 @@
 "use client";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 
 import { AutoLinkNode } from "@lexical/link";
 import { AutoLinkPlugin } from "@lexical/react/LexicalAutoLinkPlugin";
-import { ClearEditorPlugin } from "@lexical/react/LexicalClearEditorPlugin";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+// import { CharacterLimitPlugin } from "@lexical/react/LexicalCharacterLimitPlugin";
+// import { OverflowNode } from "@lexical/overflow";
+
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
-import {
-  $getRoot,
-  $getSelection,
-  $isRangeSelection,
-  type EditorState,
-} from "lexical";
+import { $getRoot, $getSelection, type EditorState } from "lexical";
+import { ClearEditorPlugin } from "@lexical/react/LexicalClearEditorPlugin";
 
 import { PLACEHOLDER, URL_REGEX } from "@/lib/constants";
 import { getCharCount } from "@/lib/getCharCount";
-import { loadLocalContent } from "@/lib/loadLocalState";
-import { formatTweetName } from "@/lib/utils";
-import { useLocalStorage } from "@uidotdev/usehooks";
-import { ClipboardCopy, Eraser } from "lucide-react";
-import { usePathname } from "next/navigation";
-import type { LocalTweet, LocalTweets } from "./types";
+import { useTweetStore } from "@/lib/store";
+import { randomName } from "@/lib/utils";
 import { Button } from "./ui/button";
-import { useToast } from "./ui/use-toast";
+import { Plus } from "lucide-react";
 
 const theme = {
   link: "autolink",
@@ -51,34 +45,102 @@ const MATCHERS = [
   },
 ];
 
+function BottomBar({ selection }: { selection: string }) {
+  const [editor] = useLexicalComposerContext();
+  const createTweet = useTweetStore((state) => state.createTweet);
+  const setCurrentTweetId = useTweetStore((state) => state.setCurrentTweetId);
+
+  const newTweet = useCallback(
+    function newTweet() {
+      const id = randomName();
+      const tweet = {
+        id: id,
+        createdAt: new Date().getTime().toString(),
+        content:
+          '{"root":{"children":[{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0}],"direction":null,"format":"","indent":0,"type":"root","version":1}}',
+        text: "",
+      };
+      console.log("new:", tweet);
+      createTweet(tweet);
+      setCurrentTweetId(id);
+    },
+    [createTweet, setCurrentTweetId, editor],
+  );
+
+  return (
+    <div className="flex flex-col gap-3 md:w-[675px] min-w-full md:min-w-1">
+      <SelectionCount selection={selection} />
+      <Button onClick={newTweet}>
+        <Plus className="mr-2 h-4 w-4" /> New
+      </Button>
+    </div>
+  );
+}
+
 function RestoreFromLocalStoragePlugin() {
   const [editor] = useLexicalComposerContext();
-  const pathname = usePathname();
-  const tweetId = pathname.split("/").pop() as string;
-  const [serializedEditorState, setSerializedEditorState] = useLocalStorage<
-    string | null
-  >(tweetId, null);
+  const updateTweet = useTweetStore((state) => state.updateTweet);
+  const allTweets = useTweetStore((state) => state.allTweets);
+  const createTweet = useTweetStore((state) => state.createTweet);
+  const setCurrentTweetId = useTweetStore((state) => state.setCurrentTweetId);
+  const currentTweetId = useTweetStore((state) => state.currentTweetId);
+  const currentTweet = allTweets.find((tweet) => tweet.id === currentTweetId);
   const isFirstRender = useRef(true);
+
+  // load the tweet from local storage when changing the current tweet
+  useEffect(() => {
+    if (
+      currentTweet &&
+      currentTweet?.content !== JSON.stringify(editor.getEditorState())
+    ) {
+      const content = editor.parseEditorState(currentTweet.content);
+      editor.setEditorState(content);
+    }
+  }, [editor, currentTweet]);
 
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
 
-      if (serializedEditorState) {
-        const initialEditorState = editor.parseEditorState(
-          serializedEditorState ?? "",
+      // if there is a selected tweet, load it
+      if (currentTweet) {
+        const content = editor.parseEditorState(
+          JSON.parse(currentTweet.content),
         );
-        // TODO: error here wtf
-        editor.setEditorState(initialEditorState);
+        editor.setEditorState(content);
+      }
+
+      console.log(allTweets);
+      // if there are no tweets, create a new one
+      if (allTweets.length === 0) {
+        console.log("creating new tweet");
+        const tweetId = randomName();
+        createTweet({
+          id: tweetId,
+          createdAt: new Date().getTime().toString(),
+          content: JSON.stringify(editor.getEditorState()),
+          text: editor.getEditorState().read(() => {
+            const root = $getRoot();
+            return root.getTextContent() ?? "";
+          }),
+        });
+        setCurrentTweetId(tweetId);
       }
     }
-  }, [serializedEditorState, editor]);
+  }, [allTweets, createTweet, setCurrentTweetId, editor, currentTweet]);
 
   const onChange = useCallback(
     (editorState: EditorState) => {
-      setSerializedEditorState(JSON.stringify(editorState.toJSON()));
+      updateTweet(currentTweetId, {
+        content: JSON.stringify(editorState),
+        text: editorState.read(() => {
+          const root = $getRoot();
+          return root.getTextContent() ?? "";
+        }),
+      });
+      console.log(currentTweet);
     },
-    [setSerializedEditorState],
+    [updateTweet, currentTweet, currentTweetId],
   );
 
   return <OnChangePlugin onChange={onChange} />;
@@ -96,57 +158,9 @@ function AutoFocusPlugin() {
 
 const SelectionCount = memo(({ selection }: { selection: string }) => {
   return (
-    <span className="text-gray-500">
-      {" "}
+    <span className="text-gray-500 mt-5">
       {getCharCount(selection)} characters selected{" "}
     </span>
-  );
-});
-
-const Toolbar = memo(() => {
-  const [editor] = useLexicalComposerContext();
-  const { toast } = useToast();
-
-  const handleClear = () => {
-    editor.update(() => {
-      $getRoot().clear();
-
-      toast({
-        description: "The tweet has been cleared.",
-        variant: "destructive",
-      });
-    });
-  };
-
-  const handleCopy = () => {
-    editor.update(() => {
-      const root = $getRoot();
-      const text = root.__cachedText ?? "";
-      navigator.clipboard.writeText(text);
-
-      toast({
-        description: "The tweet has been copied to your clipboard.",
-      });
-    });
-  };
-
-  return (
-    <>
-      <div className="flex flex-col md:flex-row mt-5 gap-5">
-        <Button
-          className="flex-auto"
-          variant="destructive"
-          onClick={handleClear}
-        >
-          <Eraser className="mr-2 h-4 w-4" />
-          Clear
-        </Button>
-        <Button className="flex-auto" variant="default" onClick={handleCopy}>
-          <ClipboardCopy className="mr-2 h-4 w-4" />
-          Copy
-        </Button>
-      </div>
-    </>
   );
 });
 
@@ -159,147 +173,17 @@ const initialConfig = {
   theme: theme,
   onError,
   nodes: [AutoLinkNode],
-  // editorState: content,
 };
 
-function Editor({ setCharCount }: { setCharCount: React.Dispatch<number> }) {
+function Editor() {
   const [selection, setSelection] = useState("");
-  const pathname = usePathname();
-  const tweetId = pathname.split("/").pop() as string;
-  const [tweets, setTweets] = useLocalStorage<LocalTweets>("tweets", []);
-  const [_, setSerializedEditorState] = useLocalStorage<string | null>(
-    tweetId,
-    null,
-  );
-
-  // function truncate(str: string, n: number) {
-  //   // return str.length > n ? `${str.substr(0, n - 1)}...` : str;
-  //   return str.length > n ? `${str.slice(0, n)}...` : str;
-  // }
 
   const onSelection = useCallback((editorState: EditorState) => {
     editorState.read(() => {
       const selection = $getSelection();
-
-      if (
-        selection !== null &&
-        selection?.anchor?.offset !== selection?.focus?.offset
-      ) {
-        const anchorOffset = selection.anchor.offset;
-        const anchorKey = selection.anchor.key;
-        const focusOffset = selection.focus.offset;
-        const focusKey = selection.focus.key;
-        const nodes = selection.getNodes();
-
-        // go through each node and get the text
-        // if the node is the anchor node, get the text from the anchor offset to the
-        let selectedText = "";
-        for (const node of nodes) {
-          // console.log(node);
-
-          if (anchorKey === focusKey) {
-            if (
-              node.__key === anchorKey &&
-              node.__type === "text" &&
-              anchorOffset > focusOffset
-            ) {
-              // console.log('anchor:', node.__text);
-              selectedText += node.__text.slice(focusOffset, anchorOffset);
-            }
-            if (
-              node.__key === anchorKey &&
-              node.__type === "text" &&
-              anchorOffset < focusOffset
-            ) {
-              // console.log('anchor:', node.__text);
-              selectedText += node.__text.slice(anchorOffset, focusOffset);
-            }
-          }
-
-          if (anchorKey < focusKey) {
-            if (
-              node.__key > anchorKey &&
-              node.__key < focusKey &&
-              node.__type === "text"
-            ) {
-              // console.log('between:', node);
-              selectedText += node.__text;
-            }
-
-            if (node.__key === anchorKey) {
-              // console.log('anchor:', node.__text);
-              selectedText += node.__text.slice(anchorOffset);
-            }
-
-            if (node.__key === focusKey) {
-              // console.log('focus:', node.__text);
-              selectedText += node.__text.slice(0, focusOffset);
-            }
-          }
-
-          if (anchorKey > focusKey) {
-            if (
-              node.__key < anchorKey &&
-              node.__key > focusKey &&
-              node.__type === "text"
-            ) {
-              // console.log('between:', node);
-              selectedText += node.__text;
-            }
-
-            if (node.__key === anchorKey) {
-              // console.log('anchor:', node.__text);
-              selectedText += node.__text.slice(0, anchorOffset);
-            }
-
-            if (node.__key === focusKey) {
-              // console.log('focus:', node.__text);
-              selectedText += node.__text.slice(focusOffset);
-            }
-          }
-        }
-        // console.log(selectedText);
-        setSelection(selectedText);
-
-        // if (anchorOffset !== focusOffset) {
-        //   const start = Math.min(anchorOffset, focusOffset);
-        //   const end = Math.max(anchorOffset, focusOffset);
-        //   const selectedText = root.__cachedText?.slice(start, end);
-        //   setSelection(selectedText ?? '');
-        // }
-      } else {
-        setSelection("");
-      }
+      setSelection(selection?.getTextContent() ?? "");
     });
   }, []);
-
-  const onEdit = useCallback(
-    function onEdit(editorState: EditorState) {
-      localStorage.setItem(`tweet-${tweetId}`, JSON.stringify(editorState));
-      setSerializedEditorState(JSON.stringify(editorState.toJSON()));
-
-      editorState.read(() => {
-        const root = $getRoot();
-        const selection = $getSelection();
-
-        // create a new tweet if one doesn't exist in the local storage
-        if (tweets.filter((tweet) => tweet?.id === tweetId).length === 0) {
-          setTweets((t) => [
-            ...t,
-            {
-              id: tweetId,
-              displayName: formatTweetName(tweetId),
-              createdAt: Date.now().toString(),
-            } as LocalTweet,
-          ]);
-        }
-
-        // setContent(root.__cachedText ?? "");
-        setCharCount(getCharCount(root.__cachedText ?? ""));
-      });
-    },
-    [setCharCount, setSerializedEditorState, setTweets, tweetId, tweets],
-  );
 
   return (
     <LexicalComposer initialConfig={initialConfig}>
@@ -314,28 +198,25 @@ function Editor({ setCharCount }: { setCharCount: React.Dispatch<number> }) {
           placeholder={<Placeholder />}
           ErrorBoundary={LexicalErrorBoundary}
         />
-        <OnChangePlugin ignoreSelectionChange onChange={onEdit} />
-        <OnChangePlugin ignoreHistoryMergeTagChange onChange={onSelection} />
+        <OnChangePlugin onChange={onSelection} />
         <HistoryPlugin />
         <AutoFocusPlugin />
         <AutoLinkPlugin matchers={MATCHERS} />
-        <ClearEditorPlugin />
         <RestoreFromLocalStoragePlugin />
-        <div className="pt-2">
-          <SelectionCount selection={selection} />
-          <Toolbar />
-        </div>
+        <BottomBar selection={selection} />
+        <ClearEditorPlugin />
+        {/* <CharacterLimitPlugin maxLength={280} charset="UTF-16" /> */}
       </div>
     </LexicalComposer>
   );
 }
 
-function Placeholder() {
+const Placeholder = memo(() => {
   return (
     <div className="absolute top-2 left-3 text-lg text-muted-foreground select-none cursor-text">
       {PLACEHOLDER}
     </div>
   );
-}
+});
 
 export default Editor;

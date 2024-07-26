@@ -1,7 +1,6 @@
 export type LocalTweet = {
-	id: string;
-	displayName: string;
-	createdAt: string;
+  id: string;
+  createdAt: string;
+  text: string;
+  content: string;
 };
-
-export type LocalTweets = Partial<LocalTweet>[];
