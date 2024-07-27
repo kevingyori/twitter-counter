@@ -4,7 +4,7 @@ import type { LocalTweet } from "@/lib/types";
 import { cn, formatTweetName } from "@/lib/utils";
 import { type MouseEvent, memo, useCallback } from "react";
 import { Button } from "./ui/button";
-import { toast } from "./ui/use-toast";
+import { toast } from "sonner";
 
 import {
   DropdownMenu,
@@ -12,7 +12,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { DotsHorizontalIcon, TrashIcon } from "@radix-ui/react-icons";
+import {
+  ClipboardCopyIcon,
+  DotsHorizontalIcon,
+  TrashIcon,
+} from "@radix-ui/react-icons";
+import { ToastAction } from "./ui/toast";
 
 function formatDate(date: string) {
   return new Date(Number(date)).toLocaleDateString("en-GB", {
@@ -51,15 +56,12 @@ function formatDate(date: string) {
 //   });
 // }
 
-type TweetCardProps = {
-  tweet: LocalTweet;
-};
-
-const TweetCard = memo(function TweetCard({ tweet }: TweetCardProps) {
+const TweetCard = memo(function TweetCard({ tweet }: { tweet: LocalTweet }) {
   const currentTweetId = useTweetStore((state) => state.currentTweetId);
   const setCurrentTweetId = useTweetStore((state) => state.setCurrentTweetId);
   const allTweets = useTweetStore((state) => state.allTweets);
   const deleteTweet = useTweetStore((state) => state.deleteTweet);
+  const undoDelete = useTweetStore((state) => state.undoDelete);
 
   const handleDelete = useCallback(
     function handleDelete(e: MouseEvent) {
@@ -72,13 +74,15 @@ const TweetCard = memo(function TweetCard({ tweet }: TweetCardProps) {
       //   )[allTweets.length]?.id,
       // );
       setCurrentTweetId(allTweets[0].id);
-      console.log("new active", allTweets[1].id);
+      // console.log("new active", allTweets[1].id);
 
-      toast({
+      toast("Tweet deleted", {
         description: "Tweet deleted",
-        variant: "destructive",
+        action: {
+          label: "Undo",
+          onClick: () => undoDelete(tweet.id),
+        },
       });
-      // deleteTweet(tweet.id as string, tweetId as string, tweets);
     },
     [deleteTweet, tweet.id],
   );
@@ -120,6 +124,9 @@ const TweetCard = memo(function TweetCard({ tweet }: TweetCardProps) {
             <TrashIcon className="h-4 w-4 mr-2" />
             Delete
           </DropdownMenuItem>
+          <DropdownMenuItem>
+            <ClipboardCopyIcon className="h-4 w-4 mr-2" /> Duplicate
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
@@ -132,6 +139,7 @@ function truncate(str: string, n: number) {
 
 const ListOfTweets = memo(() => {
   const allTweets = useTweetStore((state) => state.allTweets);
+  const trash = useTweetStore((state) => state.trash);
 
   return (
     <div className="flex flex-col gap-3 md:w-[675px] min-w-full md:min-w-1">
@@ -143,6 +151,14 @@ const ListOfTweets = memo(() => {
               Number.parseInt(a.createdAt as string),
           )
           .map((tweet) => <TweetCard key={tweet.id} tweet={tweet} />)}
+      {trash.length > 0 && (
+        <div className="flex flex-col gap-3">
+          <h2 className="text-lg font-bold">Trash</h2>
+          {trash.map((tweet) => (
+            <TweetCard key={tweet.id} tweet={tweet} />
+          ))}
+        </div>
+      )}
     </div>
   );
 });

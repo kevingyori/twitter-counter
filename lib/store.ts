@@ -9,6 +9,8 @@ export type Store = {
   createTweet: (tweet: LocalTweet) => void;
   updateTweet: (id: string, tweet: Partial<LocalTweet>) => void;
   deleteTweet: (id: string) => void;
+  undoDelete: (id: string) => void;
+  trash: LocalTweet[];
 };
 
 export const useTweetStore = create<Store>()(
@@ -27,10 +29,33 @@ export const useTweetStore = create<Store>()(
             t.id === id ? { ...t, ...tweet } : t,
           ),
         })),
-      deleteTweet: (id) =>
+      deleteTweet: (id) => {
+        // move tweet to trash before deleting (max 5 tweets in trash)
+        const tweet = get().allTweets.find((t) => t.id === id);
+        const trash = get().trash;
+        if (tweet) {
+          if (trash.length >= 5) {
+            trash.shift();
+          }
+          set((state) => ({
+            trash: [...state.trash, tweet],
+          }));
+        }
+
         set((state) => ({
           allTweets: state.allTweets.filter((t) => t.id !== id),
-        })),
+        }));
+      },
+      undoDelete: (id) => {
+        const tweet = get().trash.find((t) => t.id === id);
+        if (tweet) {
+          set((state) => ({
+            allTweets: [...state.allTweets, tweet],
+            trash: state.trash.filter((t) => t.id !== id),
+          }));
+        }
+      },
+      trash: [],
     }),
     {
       name: "tweet-store",

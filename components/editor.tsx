@@ -70,7 +70,7 @@ function BottomBar({ selection }: { selection: string }) {
   return (
     <div className="flex flex-col gap-3 md:w-[675px] min-w-full md:min-w-1">
       <SelectionCount selection={selection} />
-      <Button onClick={newTweet} variant="outline">
+      <Button onClick={newTweet} variant="default">
         <Plus className="mr-2 h-4 w-4" /> New
       </Button>
     </div>
@@ -158,7 +158,7 @@ function AutoFocusPlugin() {
 
 const SelectionCount = memo(({ selection }: { selection: string }) => {
   return (
-    <span className="text-gray-500 mt-5">
+    <span className="text-gray-500 mt-3">
       {getCharCount(selection)} characters selected{" "}
     </span>
   );

@@ -7,7 +7,7 @@ import { ModeToggle } from "@/components/ui/theme-toggle";
 import dynamic from "next/dynamic";
 import { useState } from "react";
 
-const Toaster = dynamic(() => import("@/components/ui/toaster"));
+const Toaster = dynamic(() => import("@/components/ui/sonner"));
 
 export default function Home() {
   const [charCount, setCharCount] = useState(0);
@@ -21,7 +21,7 @@ export default function Home() {
         <Editor />
       </div>
       <ListOfTweets />
-      <Toaster />
+      <Toaster closeButton />
     </main>
   );
 }
