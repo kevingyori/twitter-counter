@@ -47,32 +47,10 @@ const MATCHERS = [
 
 function BottomBar({ selection }: { selection: string }) {
   const [editor] = useLexicalComposerContext();
-  const createTweet = useTweetStore((state) => state.createTweet);
-  const setCurrentTweetId = useTweetStore((state) => state.setCurrentTweetId);
-
-  const newTweet = useCallback(
-    function newTweet() {
-      const id = randomName();
-      const tweet = {
-        id: id,
-        createdAt: new Date().getTime().toString(),
-        content:
-          '{"root":{"children":[{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0}],"direction":null,"format":"","indent":0,"type":"root","version":1}}',
-        text: "",
-      };
-      console.log("new:", tweet);
-      createTweet(tweet);
-      setCurrentTweetId(id);
-    },
-    [createTweet, setCurrentTweetId, editor],
-  );
 
   return (
     <div className="flex flex-col gap-3 md:w-[675px] min-w-full md:min-w-1">
       <SelectionCount selection={selection} />
-      <Button onClick={newTweet} variant="default">
-        <Plus className="mr-2 h-4 w-4" /> New
-      </Button>
     </div>
   );
 }
@@ -158,7 +136,7 @@ function AutoFocusPlugin() {
 
 const SelectionCount = memo(({ selection }: { selection: string }) => {
   return (
-    <span className="text-gray-500 mt-3">
+    <span className="text-gray-500 mt-3 text-md">
       {getCharCount(selection)} characters selected{" "}
     </span>
   );

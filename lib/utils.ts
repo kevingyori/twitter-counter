@@ -14,6 +14,18 @@ export function randomName() {
   });
 }
 
+export function formatDate(date: string) {
+  return new Date(Number(date)).toLocaleDateString("en-GB", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+export function truncate(str: string, n: number) {
+  return str.length > n ? `${str.slice(0, n)}...` : str;
+}
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
