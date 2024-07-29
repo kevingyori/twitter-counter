@@ -1,17 +1,13 @@
-import { LocalTweet } from "@/lib/types";
+import type { LocalTweet } from "@/lib/types";
 import { formatDate, formatTweetName, truncate } from "@/lib/utils";
-import { ColumnDef, Row } from "@tanstack/react-table";
+import type { ColumnDef, Row } from "@tanstack/react-table";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  ClipboardCopyIcon,
-  DotsHorizontalIcon,
-  TrashIcon,
-} from "@radix-ui/react-icons";
+import { DotsHorizontalIcon, TrashIcon } from "@radix-ui/react-icons";
 import { Button } from "./ui/button";
 import { useCallback } from "react";
 import { useTweetStore } from "@/lib/store";
@@ -24,8 +20,8 @@ function ActionCell({ row }: { row: Row<LocalTweet> }) {
   const setCurrentTweetId = useTweetStore((state) => state.setCurrentTweetId);
 
   const handleDelete = useCallback(
-    function handleDelete(e: MouseEvent) {
-      e.stopPropagation();
+    function handleDelete(e: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+      e?.stopPropagation();
       console.log("deleting", row.original.id);
       deleteTweet(row.original.id);
       // setCurrentTweetId(
@@ -45,7 +41,7 @@ function ActionCell({ row }: { row: Row<LocalTweet> }) {
         },
       });
     },
-    [deleteTweet, row],
+    [deleteTweet, row, allTweets, setCurrentTweetId, undoDelete],
   );
   return (
     <DropdownMenu>

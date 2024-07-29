@@ -1,5 +1,4 @@
 "use client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCharCount } from "@/lib/getCharCount";
 import { useTweetStore } from "@/lib/store";
 import { cn } from "@/lib/utils";

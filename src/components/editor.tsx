@@ -20,8 +20,6 @@ import { PLACEHOLDER, URL_REGEX } from "@/lib/constants";
 import { getCharCount } from "@/lib/getCharCount";
 import { useTweetStore } from "@/lib/store";
 import { randomName } from "@/lib/utils";
-import { Button } from "./ui/button";
-import { Plus } from "lucide-react";
 
 const theme = {
   link: "autolink",
@@ -46,8 +44,6 @@ const MATCHERS = [
 ];
 
 function BottomBar({ selection }: { selection: string }) {
-  const [editor] = useLexicalComposerContext();
-
   return (
     <div className="flex flex-col gap-3 md:w-[675px] min-w-full md:min-w-1">
       <SelectionCount selection={selection} />

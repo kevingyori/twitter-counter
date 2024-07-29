@@ -1,8 +1,8 @@
 "use client";
 
 import {
-  ColumnDef,
-  ColumnFiltersState,
+  type ColumnDef,
+  type ColumnFiltersState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
@@ -25,16 +25,17 @@ import { DataTablePagination } from "./pagination";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { Plus } from "lucide-react";
+import type { LocalTweet } from "@/lib/types";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
 }
 
-export function DataTable<TData, TValue>({
+export function DataTable<_TData, TValue>({
   columns,
   data,
-}: DataTableProps<TData, TValue>) {
+}: DataTableProps<LocalTweet, TValue>) {
   const setCurrentTweetId = useTweetStore((state) => state.setCurrentTweetId);
   const currentTweetId = useTweetStore((state) => state.currentTweetId);
   const createTweet = useTweetStore((state) => state.createTweet);
