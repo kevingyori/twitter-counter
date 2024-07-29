@@ -84,7 +84,6 @@ function RestoreFromLocalStoragePlugin() {
         editor.setEditorState(content);
       }
 
-      console.log(allTweets);
       // if there are no tweets, create a new one
       if (allTweets.length === 0) {
         console.log("creating new tweet");
@@ -109,15 +108,15 @@ function RestoreFromLocalStoragePlugin() {
         content: JSON.stringify(editorState),
         text: editorState.read(() => {
           const root = $getRoot();
+          console.log(root.getTextContent());
           return root.getTextContent() ?? "";
         }),
       });
-      console.log(currentTweet);
     },
-    [updateTweet, currentTweet, currentTweetId],
+    [updateTweet, currentTweetId],
   );
 
-  return <OnChangePlugin onChange={onChange} />;
+  return <OnChangePlugin ignoreSelectionChange onChange={onChange} />;
 }
 
 function AutoFocusPlugin() {
