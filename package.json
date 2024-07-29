@@ -11,10 +11,6 @@
     "fix": "biome check . --write"
   },
   "dependencies": {
-    "@automerge/automerge": "^2.2.7",
-    "@automerge/automerge-repo": "^1.2.1",
-    "@automerge/automerge-repo-react-hooks": "^1.2.1",
-    "@automerge/automerge-repo-storage-indexeddb": "^1.2.1",
     "@lexical/link": "^0.16.1",
     "@lexical/react": "^0.16.1",
     "@radix-ui/react-alert-dialog": "^1.1.1",
