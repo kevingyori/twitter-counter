@@ -13,13 +13,26 @@ import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
-import { $getRoot, $getSelection, type EditorState } from "lexical";
+import {
+  $createParagraphNode,
+  $createTextNode,
+  $getRoot,
+  $getSelection,
+  type EditorState,
+} from "lexical";
 import { ClearEditorPlugin } from "@lexical/react/LexicalClearEditorPlugin";
 
 import { PLACEHOLDER, URL_REGEX } from "@/lib/constants";
 import { getCharCount } from "@/lib/getCharCount";
 import { useTweetStore } from "@/lib/store";
-import { randomName } from "@/lib/utils";
+import {
+  useDocument,
+  useHandle,
+  useRepo,
+} from "@automerge/automerge-repo-react-hooks";
+import type { LocalTweet } from "@/lib/types";
+
+import { Doc, getHeads, view } from "@automerge/automerge/next";
 
 const theme = {
   link: "autolink",
@@ -58,62 +71,109 @@ function RestoreFromLocalStoragePlugin() {
   const createTweet = useTweetStore((state) => state.createTweet);
   const setCurrentTweetId = useTweetStore((state) => state.setCurrentTweetId);
   const currentTweetId = useTweetStore((state) => state.currentTweetId);
-  const currentTweet = allTweets.find((tweet) => tweet.id === currentTweetId);
+
   const isFirstRender = useRef(true);
+
+  const repo = useRepo();
+  const document = useDocument<LocalTweet>(currentTweetId);
+  const handle = useHandle<LocalTweet>(currentTweetId);
+
+  const isReady = handle?.isReady();
+
+  // console.log(
+  //   "DOCUMENT: ",
+  //   document[0],
+  //   "URL: ",
+  //   currentTweetId,
+  //   "HANDLE: ",
+  //   handle,
+  // );
+  // // console.log("handle isready", handle?.isReady());
+
+  // useEffect(() => {
+  //   console.log("handle isready", handle?.isReady());
+  // }, [handle]);
+
+  const currentTweet = document[0];
+
+  useEffect(() => {
+    console.log("ready check");
+    handle?.whenReady().then(async () => {
+      // if (isReady) {
+      const doc = await handle.doc();
+      const heads = getHeads(doc);
+      console.log("heads: ", heads);
+      console.log(doc.text);
+      // console.log("views: ", view(currentTweet, heads));
+      // }
+    });
+  }, [handle]);
 
   // load the tweet from local storage when changing the current tweet
   useEffect(() => {
     if (
       currentTweet &&
-      currentTweet?.content !== JSON.stringify(editor.getEditorState())
+      !isFirstRender.current &&
+      currentTweet?.text !==
+        editor.getEditorState().read(() => $getRoot().getTextContent())
     ) {
-      const content = editor.parseEditorState(currentTweet.content);
-      editor.setEditorState(content);
+      // &&
+      // currentTweet?.text !== JSON.stringify(editor.getEditorState())
+      editor.update(() => {
+        const paragraph = $createParagraphNode();
+        const textNode = $createTextNode(currentTweet.text);
+
+        paragraph.append(textNode);
+        $getRoot().clear().append(paragraph);
+      });
     }
   }, [editor, currentTweet]);
 
   useEffect(() => {
-    if (isFirstRender.current) {
+    if (isFirstRender.current && currentTweet) {
       isFirstRender.current = false;
 
       // if there is a selected tweet, load it
       if (currentTweet) {
-        const content = editor.parseEditorState(
-          JSON.parse(currentTweet.content),
-        );
-        editor.setEditorState(content);
+        editor.update(() => {
+          const paragraph = $createParagraphNode();
+          const textNode = $createTextNode(currentTweet.text);
+
+          paragraph.append(textNode);
+          $getRoot().clear().append(paragraph);
+        });
       }
 
       // if there are no tweets, create a new one
       if (allTweets.length === 0) {
-        console.log("creating new tweet");
-        const tweetId = randomName();
-        createTweet({
-          id: tweetId,
-          createdAt: new Date().getTime().toString(),
-          content: JSON.stringify(editor.getEditorState()),
-          text: editor.getEditorState().read(() => {
-            const root = $getRoot();
-            return root.getTextContent() ?? "";
-          }),
-        });
-        setCurrentTweetId(tweetId);
+        const handle = createTweet(repo);
+        setCurrentTweetId(handle);
       }
     }
-  }, [allTweets, createTweet, setCurrentTweetId, editor, currentTweet]);
+  }, [allTweets, createTweet, setCurrentTweetId, editor, currentTweet, repo]);
 
   const onChange = useCallback(
     (editorState: EditorState) => {
-      updateTweet(currentTweetId, {
-        content: JSON.stringify(editorState),
-        text: editorState.read(() => {
-          const root = $getRoot();
-          console.log(root.getTextContent());
-          return root.getTextContent() ?? "";
-        }),
+      handle?.whenReady().then(async () => {
+        // if (isReady) {
+        // const doc = await handle.doc();
+        // const heads = getHeads(document);
+        // console.log("heads: ", heads);
+        // console.log(doc.text);
+        // console.log(currentTweetId);
+        // console.log("views: ", view(currentTweet, heads));
+        // }
       });
+
+      updateTweet(
+        currentTweetId,
+        editorState.read(() => {
+          return $getRoot().getTextContent() ?? "";
+        }),
+        repo,
+      );
     },
-    [updateTweet, currentTweetId],
+    [updateTweet, currentTweetId, repo],
   );
 
   return <OnChangePlugin ignoreSelectionChange onChange={onChange} />;

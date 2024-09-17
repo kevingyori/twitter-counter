@@ -26,6 +26,7 @@ import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { Plus } from "lucide-react";
 import type { LocalTweet } from "@/lib/types";
+import { useRepo } from "@automerge/automerge-repo-react-hooks";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -36,6 +37,7 @@ export function DataTable<_TData, TValue>({
   columns,
   data,
 }: DataTableProps<LocalTweet, TValue>) {
+  const repo = useRepo();
   const setCurrentTweetId = useTweetStore((state) => state.setCurrentTweetId);
   const currentTweetId = useTweetStore((state) => state.currentTweetId);
   const createTweet = useTweetStore((state) => state.createTweet);
@@ -56,19 +58,10 @@ export function DataTable<_TData, TValue>({
 
   const newTweet = useCallback(
     function newTweet() {
-      const id = randomName();
-      const tweet = {
-        id: id,
-        createdAt: new Date().getTime().toString(),
-        content:
-          '{"root":{"children":[{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0}],"direction":null,"format":"","indent":0,"type":"root","version":1}}',
-        text: "",
-      };
-      console.log("new:", tweet);
-      createTweet(tweet);
-      setCurrentTweetId(id);
+      const handle = createTweet(repo);
+      setCurrentTweetId(handle);
     },
-    [createTweet, setCurrentTweetId],
+    [createTweet, setCurrentTweetId, repo],
   );
 
   return (

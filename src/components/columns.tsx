@@ -8,7 +8,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { DotsHorizontalIcon, TrashIcon } from "@radix-ui/react-icons";
-import { Button } from "./ui/button";
 import { useCallback } from "react";
 import { useTweetStore } from "@/lib/store";
 import { toast } from "sonner";
@@ -46,9 +45,7 @@ function ActionCell({ row }: { row: Row<LocalTweet> }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger>
-        <Button variant="ghost">
-          <DotsHorizontalIcon />
-        </Button>
+        <DotsHorizontalIcon />
       </DropdownMenuTrigger>
       <DropdownMenuContent>
         <DropdownMenuItem onClick={handleDelete}>
@@ -68,9 +65,7 @@ export const columns: ColumnDef<LocalTweet>[] = [
     accessorKey: "text",
     header: "Tweet",
     cell: ({ row }) => (
-      <div>
-        {truncate(row.original.text || formatTweetName(row.original.id), 120)}
-      </div>
+      <div>{truncate(row.original.text || "Untitled Tweet", 120)}</div>
     ),
   },
   {

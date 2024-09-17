@@ -1,6 +1,7 @@
+import type { AutomergeUrl } from "@automerge/automerge-repo";
+
 export type LocalTweet = {
-  id: string;
+  id: AutomergeUrl;
   createdAt: string;
   text: string;
-  content: string;
 };
